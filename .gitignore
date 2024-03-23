@@ -1,0 +1,7 @@
+*.swp
+.coverprofile
+/.idea/
+/password-generator
+/password.test
+profile.cpu
+profile.mem
