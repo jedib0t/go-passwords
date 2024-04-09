@@ -91,7 +91,10 @@ func (g *generator) Generate() string {
 
 	// guarantee a minimum and maximum number of symbols
 	if g.minSymbols > 0 || g.maxSymbols > 0 {
-		numSymbolsToGenerate := g.minSymbols + g.rng.Intn(g.maxSymbols-g.minSymbols)
+		numSymbolsToGenerate := g.minSymbols
+		if g.maxSymbols > g.minSymbols {
+			numSymbolsToGenerate += g.rng.Intn(g.maxSymbols-g.minSymbols) + 1
+		}
 		for numSymbolsToGenerate > 0 {
 			// generate a random new symbol
 			char := g.charsetSymbols[g.rng.Intn(g.charsetSymbolsLen)]
