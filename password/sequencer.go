@@ -52,6 +52,7 @@ type sequencer struct {
 	mutex          sync.Mutex
 	n              *big.Int
 	nMax           *big.Int
+	numChars       int
 	password       []int
 	passwordChars  []rune
 	passwordMaxIdx int
@@ -60,28 +61,32 @@ type sequencer struct {
 
 // NewSequencer returns a password sequencer that implements the Sequencer
 // interface.
-func NewSequencer(charset Charset, numChars int) (Sequencer, error) {
-	if len(charset) == 0 {
+func NewSequencer(rules ...Rule) (Sequencer, error) {
+	s := &sequencer{
+		rng: rand.New(rand.NewSource(time.Now().UnixNano())),
+	}
+	for _, rule := range append(defaultRules, rules...) {
+		rule(s)
+	}
+
+	// init the variables
+	s.base = big.NewInt(int64(len(s.charset)))
+	s.charsetLen = len(s.charset)
+	s.charsetMaxIdx = len(s.charset) - 1
+	s.maxWords = MaximumPossibleWords(Charset(s.charset), s.numChars)
+	s.n = big.NewInt(0)
+	s.nMax = new(big.Int).Sub(s.maxWords, biOne)
+	s.password = make([]int, s.numChars)
+	s.passwordChars = make([]rune, s.numChars)
+	s.passwordMaxIdx = s.numChars - 1
+
+	if len(s.charset) == 0 {
 		return nil, ErrEmptyCharset
 	}
-	if numChars <= 0 {
+	if s.numChars <= 0 {
 		return nil, ErrZeroLenPassword
 	}
-	maxWords := MaximumPossibleWords(charset, numChars)
-
-	return &sequencer{
-		base:           big.NewInt(int64(len(charset))),
-		charset:        []rune(charset),
-		charsetLen:     len(charset),
-		charsetMaxIdx:  len(charset) - 1,
-		maxWords:       maxWords,
-		n:              big.NewInt(0),
-		nMax:           new(big.Int).Sub(maxWords, biOne),
-		password:       make([]int, numChars),
-		passwordChars:  make([]rune, numChars), // avoids frequent mallocs
-		passwordMaxIdx: numChars - 1,
-		rng:            rand.New(rand.NewSource(time.Now().UnixNano())),
-	}, nil
+	return s, nil
 }
 
 // First moves to the first possible password and returns the same.

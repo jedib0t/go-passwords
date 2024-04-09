@@ -77,7 +77,10 @@ func main() {
 }
 
 func generateRandomPasswords(charset password.Charset, numChars int, count *big.Int, printIndex bool, seed int64) {
-	generator, err := password.NewGenerator(charset, numChars)
+	generator, err := password.NewGenerator(
+		password.WithCharset(charset),
+		password.WithLength(numChars),
+	)
 	if err != nil {
 		fmt.Printf("ERROR: failed to instantiate generator: %v\n", err)
 		os.Exit(1)
@@ -93,7 +96,10 @@ func generateRandomPasswords(charset password.Charset, numChars int, count *big.
 }
 
 func generateSequencedPasswords(charset password.Charset, numChars int, count *big.Int, startIdx *big.Int, printIndex bool) {
-	sequencer, err := password.NewSequencer(charset, numChars)
+	sequencer, err := password.NewSequencer(
+		password.WithCharset(charset),
+		password.WithLength(numChars),
+	)
 	if err != nil {
 		fmt.Printf("ERROR: failed to instantiate generator: %v\n", err)
 		os.Exit(1)
