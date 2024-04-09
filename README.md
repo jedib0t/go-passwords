@@ -28,7 +28,10 @@ ok  	github.com/jedib0t/go-passwords/password	8.178s
 
 ### Random Passwords
 ```golang
-	generator, err := password.NewGenerator(password.AlphaNumeric, 8)
+	generator, err := password.NewGenerator(
+		password.WithCharset(password.AlphaNumeric),
+		password.WithLength(8),
+	)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -56,7 +59,10 @@ Password # 10: "kIbf3Wsm"
 
 ### In a Loop
 ```golang
-	sequencer, err := password.NewSequencer(password.AllChars.WithoutAmbiguity(), 8)
+	sequencer, err := password.NewSequencer(
+		password.WithCharset(password.AllChars.WithoutAmbiguity()),
+		password.WithLength(8),
+	)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -87,7 +93,10 @@ Password # 10: "AAAAAAAK"
 
 ### Streamed (for async processing)
 ```golang
-	sequencer, err := password.NewSequencer(password.Charset("AB"), 5)
+	sequencer, err := password.NewSequencer(
+		password.WithCharset(password.Charset("AB")),
+		password.WithLength(5),
+	)
 	if err != nil {
 		panic(err.Error())
 	}
