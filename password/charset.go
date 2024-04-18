@@ -14,7 +14,7 @@ const (
 	AlphabetsLower Charset = "abcdefghijklmnopqrstuvwxyz"
 	AlphabetsUpper Charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	Numbers        Charset = "0123456789"
-	Symbols        Charset = "~!@#$%^&*()-_=+[{]}\\|;:,<.>/?"
+	Symbols        Charset = "~!@#$%^&*()-_=+[{]}|;:,<.>/?"
 
 	AllChars     = AlphaNumeric + Symbols
 	AlphaNumeric = Alphabets + Numbers
@@ -31,18 +31,6 @@ func (c Charset) Contains(r rune) bool {
 		}
 	}
 	return false
-}
-
-// ExtractSymbols extracts and returns a Charset with just the symbols from the
-// source Charset.
-func (c Charset) ExtractSymbols() Charset {
-	sb := strings.Builder{}
-	for _, r := range c {
-		if strings.Contains(string(Symbols), string(r)) {
-			sb.WriteRune(r)
-		}
-	}
-	return Charset(sb.String())
 }
 
 // Shuffle reorders the Charset using the given RNG.

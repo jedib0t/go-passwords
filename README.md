@@ -14,12 +14,12 @@ goos: linux
 goarch: amd64
 pkg: github.com/jedib0t/go-passwords/password
 cpu: AMD Ryzen 9 5900X 12-Core Processor
-BenchmarkGenerator_Generate-12    	 6537692	       171.2 ns/op	      40 B/op	       2 allocs/op
-BenchmarkSequencer_GotoN-12       	 4000642	       290.0 ns/op	      32 B/op	       3 allocs/op
-BenchmarkSequencer_Next-12        	13113400	        88.12 ns/op	      16 B/op	       1 allocs/op
-BenchmarkSequencer_NextN-12       	 6000421	       196.9 ns/op	      32 B/op	       3 allocs/op
-BenchmarkSequencer_Prev-12        	12717573	        92.34 ns/op	      16 B/op	       1 allocs/op
-BenchmarkSequencer_PrevN-12       	 3909879	       302.3 ns/op	      32 B/op	       3 allocs/op
+BenchmarkGenerator_Generate-12    	 6245260	       188.2 ns/op	      40 B/op	       2 allocs/op
+BenchmarkSequencer_GotoN-12       	 4359440	       270.6 ns/op	      32 B/op	       3 allocs/op
+BenchmarkSequencer_Next-12        	13632730	        83.67 ns/op	      16 B/op	       1 allocs/op
+BenchmarkSequencer_NextN-12       	 6608569	       181.5 ns/op	      32 B/op	       3 allocs/op
+BenchmarkSequencer_Prev-12        	13509426	        87.51 ns/op	      16 B/op	       1 allocs/op
+BenchmarkSequencer_PrevN-12       	 4266948	       276.8 ns/op	      32 B/op	       3 allocs/op
 PASS
 ok  	github.com/jedib0t/go-passwords/password	8.178s
 ```
@@ -29,8 +29,11 @@ ok  	github.com/jedib0t/go-passwords/password	8.178s
 ### Random Passwords
 ```golang
 	generator, err := password.NewGenerator(
-		password.WithCharset(password.AlphaNumeric),
-		password.WithLength(8),
+		password.WithCharset(password.AllChars.WithoutAmbiguity().WithoutDuplicates()),
+		password.WithLength(12),
+		password.WithMinLowerCase(5),
+		password.WithMinpperCase(2),
+		password.WithNumSymbols(1, 1),
 	)
 	if err != nil {
 		panic(err.Error())
@@ -42,16 +45,16 @@ ok  	github.com/jedib0t/go-passwords/password	8.178s
 <details>
 <summary>Output...</summary>
 <pre>
-Password #  1: "GcXO27vy"
-Password #  2: "BK9zGIPN"
-Password #  3: "o5UCF2i2"
-Password #  4: "YuoEsl4p"
-Password #  5: "fMiLzaL7"
-Password #  6: "5VpPTeJG"
-Password #  7: "LvGoxO1O"
-Password #  8: "nWD9rSaj"
-Password #  9: "qMjwMI9n"
-Password # 10: "kIbf3Wsm"
+Password #  1: "CmHii4zek_wU"
+Password #  2: "m+GicmQEnxkz"
+Password #  3: "FruTpkprFNR="
+Password #  4: "p@xjqBH3bbfi"
+Password #  5: "D(WadeVLTfhm"
+Password #  6: "uLpSFv%pMidL"
+Password #  7: "bbBQ*gypmhTx"
+Password #  8: "abshu4}HNpwE"
+Password #  9: "UjGpDsP{4mfi"
+Password # 10: "toKue=dvUPzz"
 </pre>
 </details>
 

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/big"
-	"math/rand"
+	"math/rand/v2"
 	"sync"
 	"time"
 )
@@ -37,6 +37,8 @@ type Sequencer interface {
 	PrevN(n *big.Int) string
 	// Reset cleans up state and moves to the first possible word.
 	Reset()
+	// SetSeed overrides the seed value for the RNG.
+	SetSeed(seed uint64)
 	// Stream sends all possible passwords in order to the given channel. If you
 	// want to limit output, pass in a *big.Int with the number of passwords you
 	// want to be generated and streamed.
@@ -62,9 +64,8 @@ type sequencer struct {
 // NewSequencer returns a password sequencer that implements the Sequencer
 // interface.
 func NewSequencer(rules ...Rule) (Sequencer, error) {
-	s := &sequencer{
-		rng: rand.New(rand.NewSource(time.Now().UnixNano())),
-	}
+	s := &sequencer{}
+	s.SetSeed(uint64(time.Now().UnixNano()))
 	for _, rule := range append(defaultRules, rules...) {
 		rule(s)
 	}
@@ -201,11 +202,11 @@ func (s *sequencer) Reset() {
 }
 
 // SetSeed changes the seed value of the RNG.
-func (s *sequencer) SetSeed(seed int64) {
+func (s *sequencer) SetSeed(seed uint64) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	s.rng = rand.New(rand.NewSource(seed))
+	s.rng = rand.New(rand.NewPCG(seed, seed+100))
 }
 
 // Stream sends all possible passwords in order to the given channel. If you

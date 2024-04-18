@@ -34,6 +34,32 @@ func WithLength(l int) Rule {
 	}
 }
 
+// WithMinLowerCase controls the minimum number of lower case characters that
+// can appear in the password.
+//
+// Note: This works only on a Generator and is ineffective with a Sequencer.
+func WithMinLowerCase(min int) Rule {
+	return func(a any) {
+		switch v := a.(type) {
+		case *generator:
+			v.minLowerCase = min
+		}
+	}
+}
+
+// WithMinUpperCase controls the minimum number of upper case characters that
+// can appear in the password.
+//
+// Note: This works only on a Generator and is ineffective with a Sequencer.
+func WithMinUpperCase(min int) Rule {
+	return func(a any) {
+		switch v := a.(type) {
+		case *generator:
+			v.minUpperCase = min
+		}
+	}
+}
+
 // WithNumSymbols controls the min/max number of symbols that can appear in the
 // password.
 //
