@@ -67,17 +67,29 @@ func (g *generator) Generate() string {
 	password := g.pool.Get().([]rune)
 	defer g.pool.Put(password)
 
+	// init the filler
 	idx := 0
-	fillPassword := func(count int, runes []rune) {
-		for ; count > 0 && idx < len(password); count-- {
+	fillPassword := func(runes []rune, count int) {
+		for ; idx < len(password) && count > 0; count-- {
 			password[idx] = runes[g.rng.IntN(len(runes))]
 			idx++
 		}
 	}
-	fillPassword(g.minLowerCase, g.charsetCaseLower)
-	fillPassword(g.minUpperCase, g.charsetCaseUpper)
-	fillPassword(g.numSymbolsToGenerate(), g.charsetSymbols)
-	fillPassword(len(password)-idx, g.charsetNonSymbols)
+
+	// fill it with minimum requirements first
+	if g.minLowerCase > 0 {
+		fillPassword(g.charsetCaseLower, g.minLowerCase)
+	}
+	if g.minUpperCase > 0 {
+		fillPassword(g.charsetCaseUpper, g.minUpperCase)
+	}
+	if numSymbols := g.numSymbolsToGenerate(); numSymbols > 0 {
+		fillPassword(g.charsetSymbols, numSymbols)
+	}
+	// fill the rest with non-symbols (as symbols has a max)
+	if remainingChars := len(password) - idx; remainingChars > 0 {
+		fillPassword(g.charsetNonSymbols, remainingChars)
+	}
 
 	// shuffle it all
 	g.rng.Shuffle(len(password), func(i, j int) {
@@ -119,14 +131,14 @@ func (g *generator) sanitize() (Generator, error) {
 	if g.minUpperCase > g.numChars {
 		return nil, ErrMinUpperCaseTooLong
 	}
+	if g.minSymbols > 0 && len(g.charsetSymbols) == 0 {
+		return nil, ErrNoSymbolsInCharset
+	}
 	if g.minSymbols > g.numChars {
 		return nil, ErrMinSymbolsTooLong
 	}
 	if g.minLowerCase+g.minUpperCase+g.minSymbols > g.numChars {
 		return nil, ErrRequirementsNotMet
-	}
-	if g.minSymbols > 0 && len(g.charsetSymbols) == 0 {
-		return nil, ErrNoSymbolsInCharset
 	}
 	return g, nil
 }

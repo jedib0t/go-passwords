@@ -17,7 +17,7 @@ var (
 	flagNoAmbiguity = flag.Bool("no-ambiguity", false, "Avoid Ambiguous Characters?")
 	flagNumChars    = flag.Int("num-chars", 12, "Number of characters in Password")
 	flagPrintIndex  = flag.Bool("index", false, "Print Index Value (1-indexed)")
-	flagSeed        = flag.Int64("seed", 0, "Seed value for non-sequenced mode (ignored if zero)")
+	flagSeed        = flag.Uint64("seed", 0, "Seed value for non-sequenced mode (ignored if zero)")
 	flagSequenced   = flag.Bool("sequenced", false, "Generate passwords in a sequence")
 	flagStartIdx    = flag.String("start", "0", "Index to start from in the sequence (1-indexed)")
 
@@ -49,8 +49,8 @@ func main() {
 	}
 	printIndex := *flagPrintIndex
 	seed := *flagSeed
-	if seed <= 0 {
-		seed = time.Now().UnixNano()
+	if seed == 0 {
+		seed = uint64(time.Now().UnixNano())
 	}
 	startIdx, ok := new(big.Int).SetString(*flagStartIdx, 10)
 	if !ok {
@@ -76,7 +76,7 @@ func main() {
 	}
 }
 
-func generateRandomPasswords(charset password.Charset, numChars int, count *big.Int, printIndex bool, seed int64) {
+func generateRandomPasswords(charset password.Charset, numChars int, count *big.Int, printIndex bool, seed uint64) {
 	generator, err := password.NewGenerator(
 		password.WithCharset(charset),
 		password.WithLength(numChars),

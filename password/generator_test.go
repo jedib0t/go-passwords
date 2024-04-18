@@ -2,7 +2,7 @@ package password
 
 import (
 	"fmt"
-	"strings"
+	"slices"
 	"testing"
 	"unicode"
 
@@ -42,19 +42,19 @@ func TestGenerator_Generate(t *testing.T) {
 		"uCFmDFDAoLZY",
 		"pMgNoVa9z5Vv",
 	}
-	sb := strings.Builder{}
+	var actualPasswords []string
 	for idx := 0; idx < 100; idx++ {
 		password := g.Generate()
 		assert.NotEmpty(t, password)
 		if idx < len(expectedPasswords) {
+			actualPasswords = append(actualPasswords, password)
 			assert.Equal(t, expectedPasswords[idx], password)
-			if expectedPasswords[idx] != password {
-				sb.WriteString(fmt.Sprintf("%#v,\n", password))
-			}
 		}
 	}
-	if sb.Len() > 0 {
-		fmt.Println(sb.String())
+	if !slices.Equal(expectedPasswords, actualPasswords) {
+		for _, pw := range actualPasswords {
+			fmt.Printf("%#v,\n", pw)
+		}
 	}
 }
 
@@ -81,15 +81,13 @@ func TestGenerator_Generate_WithAMixOfEverything(t *testing.T) {
 		"bVrPjBRC<bqy",
 		"f?orrWDzVYjx",
 	}
-	sb := strings.Builder{}
+	var actualPasswords []string
 	for idx := 0; idx < 100; idx++ {
 		password := g.Generate()
 		assert.NotEmpty(t, password)
 		if idx < len(expectedPasswords) {
+			actualPasswords = append(actualPasswords, password)
 			assert.Equal(t, expectedPasswords[idx], password)
-			if expectedPasswords[idx] != password {
-				sb.WriteString(fmt.Sprintf("%#v,\n", password))
-			}
 		}
 
 		numLowerCase := len(filterRunes([]rune(password), unicode.IsLower))
@@ -99,8 +97,10 @@ func TestGenerator_Generate_WithAMixOfEverything(t *testing.T) {
 		numSymbols := len(filterRunes([]rune(password), Symbols.Contains))
 		assert.True(t, numSymbols == 1, password)
 	}
-	if sb.Len() > 0 {
-		fmt.Println(sb.String())
+	if !slices.Equal(expectedPasswords, actualPasswords) {
+		for _, pw := range actualPasswords {
+			fmt.Printf("%#v,\n", pw)
+		}
 	}
 }
 
@@ -126,22 +126,22 @@ func TestGenerator_Generate_WithSymbols(t *testing.T) {
 			"-e3a6cda4#!1",
 			"162e6bb#ee53",
 		}
-		sb := strings.Builder{}
+		var actualPasswords []string
 		for idx := 0; idx < 100; idx++ {
 			password := g.Generate()
 			assert.NotEmpty(t, password)
 			if idx < len(expectedPasswords) {
+				actualPasswords = append(actualPasswords, password)
 				assert.Equal(t, expectedPasswords[idx], password)
-				if expectedPasswords[idx] != password {
-					sb.WriteString(fmt.Sprintf("%#v,\n", password))
-				}
 			}
 
 			numSymbols := getNumSymbols(password)
 			assert.True(t, numSymbols >= 0 && numSymbols <= 3, password)
 		}
-		if sb.Len() > 0 {
-			fmt.Println(sb.String())
+		if !slices.Equal(expectedPasswords, actualPasswords) {
+			for _, pw := range actualPasswords {
+				fmt.Printf("%#v,\n", pw)
+			}
 		}
 	})
 
