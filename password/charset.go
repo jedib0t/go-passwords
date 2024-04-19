@@ -14,7 +14,8 @@ const (
 	AlphabetsLower Charset = "abcdefghijklmnopqrstuvwxyz"
 	AlphabetsUpper Charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	Numbers        Charset = "0123456789"
-	Symbols        Charset = "~!@#$%^&*()-_=+[{]}|;:,<.>/?"
+	Symbols        Charset = "!@#$%^&*"
+	SymbolsFull    Charset = "~!@#$%^&*()-_=+[{]}|;:,<.>/?"
 
 	AllChars     = AlphaNumeric + Symbols
 	AlphaNumeric = Alphabets + Numbers

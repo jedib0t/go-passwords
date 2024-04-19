@@ -5,28 +5,42 @@
 [![Coverage Status](https://coveralls.io/repos/github/jedib0t/go-passwords/badge.svg?branch=main)](https://coveralls.io/github/jedib0t/go-passwords?branch=main)
 [![Go Report Card](https://goreportcard.com/badge/github.com/jedib0t/go-passwords)](https://goreportcard.com/report/github.com/jedib0t/go-passwords)
 
-Password generation library for GoLang.
+Passphrase & Password generation library for GoLang.
 
-## Benchmarks
+## Passphrases
+```golang
+	generator, err := passphrase.NewGenerator(
+		passphrase.WithCapitalizedWords(true),
+		passphrase.WithDictionary(dictionaries.English()),
+		passphrase.WithNumWords(3),
+		passphrase.WithNumber(true),
+		passphrase.WithSeparator("-"),
+		passphrase.WithWordLength(4, 6),
+	)
+	if err != nil {
+		panic(err.Error())
+	}
+	for idx := 1; idx <= 10; idx++ {
+		fmt.Printf("Passphrase #%3d: %#v\n", idx, generator.Generate())
+	}
 ```
-$ go test -bench=. -benchmem ./password
-goos: linux
-goarch: amd64
-pkg: github.com/jedib0t/go-passwords/password
-cpu: AMD Ryzen 9 5900X 12-Core Processor
-BenchmarkGenerator_Generate-12    	 6245260	       188.2 ns/op	      40 B/op	       2 allocs/op
-BenchmarkSequencer_GotoN-12       	 4359440	       270.6 ns/op	      32 B/op	       3 allocs/op
-BenchmarkSequencer_Next-12        	13632730	        83.67 ns/op	      16 B/op	       1 allocs/op
-BenchmarkSequencer_NextN-12       	 6608569	       181.5 ns/op	      32 B/op	       3 allocs/op
-BenchmarkSequencer_Prev-12        	13509426	        87.51 ns/op	      16 B/op	       1 allocs/op
-BenchmarkSequencer_PrevN-12       	 4266948	       276.8 ns/op	      32 B/op	       3 allocs/op
-PASS
-ok  	github.com/jedib0t/go-passwords/password	8.178s
-```
+<details>
+<summary>Output...</summary>
+<pre>
+Passphrase #  1: "Renest-Apod4-Yowing"
+Passphrase #  2: "Lapse-Diplex3-Wekas"
+Passphrase #  3: "Banzai-Duster8-Relock"
+Passphrase #  4: "Nulled-Mica5-Toads"
+Passphrase #  5: "Aughts5-Morro-Welter"
+Passphrase #  6: "Moth-Sigh-Pirate5"
+Passphrase #  7: "Nonart-Lambs2-Pilot"
+Passphrase #  8: "Umbles-Epilog3-Defuse"
+Passphrase #  9: "Lignin-Rayons-Rumens5"
+Passphrase # 10: "Chrism7-Flunks-Guise"
+</pre>
+</details>
 
-## Usage
-
-### Random Passwords
+## Passwords
 ```golang
 	generator, err := password.NewGenerator(
 		password.WithCharset(password.AllChars.WithoutAmbiguity().WithoutDuplicates()),
@@ -58,9 +72,8 @@ Password # 10: "toKue=dvUPzz"
 </pre>
 </details>
 
-## Sequential Passwords
+### Sequential Passwords
 
-### In a Loop
 ```golang
 	sequencer, err := password.NewSequencer(
 		password.WithCharset(password.AllChars.WithoutAmbiguity()),
@@ -94,7 +107,7 @@ Password # 10: "AAAAAAAK"
 </pre>
 </details>
 
-### Streamed (for async processing)
+#### Streamed (for async processing)
 ```golang
 	sequencer, err := password.NewSequencer(
 		password.WithCharset(password.Charset("AB")),
@@ -166,3 +179,27 @@ Password # 31: "BBBBA"
 Password # 32: "BBBBB"
 </pre>
 </details>
+
+## Benchmarks
+```
+goos: linux
+goarch: amd64
+pkg: github.com/jedib0t/go-passwords/passphrase
+cpu: AMD Ryzen 9 5900X 12-Core Processor            
+BenchmarkGenerator_Generate-12    	 5252654	       221.8 ns/op	     135 B/op	       4 allocs/op
+PASS
+ok  	github.com/jedib0t/go-passwords/passphrase	1.410s
+
+goos: linux
+goarch: amd64
+pkg: github.com/jedib0t/go-passwords/password
+cpu: AMD Ryzen 9 5900X 12-Core Processor            
+BenchmarkGenerator_Generate-12    	 6397098	       186.0 ns/op	      40 B/op	       2 allocs/op
+BenchmarkSequencer_GotoN-12       	 4321675	       273.4 ns/op	      32 B/op	       3 allocs/op
+BenchmarkSequencer_Next-12        	14045982	        83.89 ns/op	      16 B/op	       1 allocs/op
+BenchmarkSequencer_NextN-12       	 6548796	       183.2 ns/op	      32 B/op	       3 allocs/op
+BenchmarkSequencer_Prev-12        	13450102	        87.86 ns/op	      16 B/op	       1 allocs/op
+BenchmarkSequencer_PrevN-12       	 4230694	       277.4 ns/op	      32 B/op	       3 allocs/op
+PASS
+ok  	github.com/jedib0t/go-passwords/password	8.239s
+```

@@ -1,12 +1,9 @@
 .PHONY: test
 
-default: build
+default: test
 
 bench:
-	go test -bench=. -benchmem ./password
-
-build:
-	go build ./cmd/password-generator
+	go test -bench=. -benchmem ./passphrase ./password
 
 cyclo:
 	gocyclo -over 13 ./*/*.go

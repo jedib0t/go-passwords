@@ -70,16 +70,16 @@ func TestGenerator_Generate_WithAMixOfEverything(t *testing.T) {
 	g.SetSeed(1)
 
 	expectedPasswords := []string{
-		"r{rnUqHeg5QP",
-		"m1RNe4$eXuda",
-		"tq%wKqhhTMAK",
-		"r1PkMr@qta2t",
-		"hsPv+wzGiChh",
-		"uth<CZeag1o7",
-		"FeFKFxxaf|cq",
-		"jxVK#1sRis6z",
-		"bVrPjBRC<bqy",
-		"f?orrWDzVYjx",
+		"r*rnUqHeg5QP",
+		"m1RNe4@eXuda",
+		"tq@wKqhhTMAK",
+		"r1PkMr&qta2t",
+		"hsPv#wzGiChh",
+		"uth#CZeag1o7",
+		"FeFKFxxaf@cq",
+		"jxVK^1sRis6z",
+		"bVrPjBRC@bqy",
+		"f$orrWDzVYjx",
 	}
 	var actualPasswords []string
 	for idx := 0; idx < 100; idx++ {
@@ -115,16 +115,16 @@ func TestGenerator_Generate_WithSymbols(t *testing.T) {
 		g.SetSeed(1)
 
 		expectedPasswords := []string{
-			"324c22b2f55c",
-			"a5d355bf1c@4",
-			"33c!b3#+acab",
-			"e5c21aaf3353",
-			"%3cd1$5bd31e",
-			"+615abf$@536",
-			"b%ccc-c5+3f3",
-			"#4d1b52e!36!",
-			"-e3a6cda4#!1",
-			"162e6bb#ee53",
+			"435c33b31--d",
+			"a6d4--c12c#5",
+			"44c@c5$@acac",
+			"f-d32ab154-5",
+			"%5de2%6bd52e",
+			"@+26ab1$#65+",
+			"b%ccd!d-!414",
+			"$6e2b63f@4+@",
+			"!e4b+dda6$@2",
+			"2+4f-cc$ef64",
 		}
 		var actualPasswords []string
 		for idx := 0; idx < 100; idx++ {

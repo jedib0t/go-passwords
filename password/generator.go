@@ -54,7 +54,7 @@ func NewGenerator(rules ...Rule) (Generator, error) {
 			return make([]rune, g.numChars)
 		},
 	}
-	for idx := 0; idx < 25; idx++ {
+	for idx := 0; idx < storagePoolMinSize; idx++ {
 		g.pool.Put(make([]rune, g.numChars))
 	}
 
