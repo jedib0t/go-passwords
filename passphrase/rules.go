@@ -6,9 +6,11 @@ import "github.com/jedib0t/go-passwords/passphrase/dictionaries"
 type Rule func(a any)
 
 var (
-	defaultRules = []Rule{
+	basicRules = []Rule{
+		WithCapitalizedWords(true),
 		WithDictionary(dictionaries.English()),
 		WithNumWords(3),
+		WithNumber(true),
 		WithSeparator("-"),
 		WithWordLength(4, 7),
 	}

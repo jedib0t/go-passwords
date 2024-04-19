@@ -6,10 +6,13 @@ import (
 	"slices"
 	"strings"
 	"time"
+	"unicode"
+	"unicode/utf8"
 )
 
 const (
-	MinWords = 256
+	MinNumWords          = 2
+	MinWordsInDictionary = 256
 )
 
 type Generator interface {
@@ -35,7 +38,7 @@ type generator struct {
 func NewGenerator(rules ...Rule) (Generator, error) {
 	g := &generator{}
 	g.SetSeed(uint64(time.Now().UnixNano()))
-	for _, opt := range append(defaultRules, rules...) {
+	for _, opt := range append(basicRules, rules...) {
 		opt(g)
 	}
 	return g.sanitize()
@@ -56,7 +59,10 @@ func (g *generator) Generate() string {
 	// capitalize all words
 	if g.capitalize {
 		for idx := range words {
-			words[idx] = strings.Title(words[idx])
+			r, size := utf8.DecodeRuneInString(words[idx])
+			if r != utf8.RuneError {
+				words[idx] = string(unicode.ToUpper(r)) + words[idx][size:]
+			}
 		}
 	}
 	// inject a random number after one of the words
@@ -81,10 +87,10 @@ func (g *generator) sanitize() (Generator, error) {
 	slices.DeleteFunc(g.dictionary, func(word string) bool {
 		return len(word) < g.wordLenMin || len(word) > g.wordLenMax
 	})
-	if len(g.dictionary) < MinWords {
+	if len(g.dictionary) < MinWordsInDictionary {
 		return nil, ErrDictionaryTooSmall
 	}
-	if g.numWords <= 0 {
+	if g.numWords < MinNumWords {
 		return nil, ErrNumWordsInvalid
 	}
 	return g, nil

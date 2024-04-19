@@ -66,7 +66,7 @@ type sequencer struct {
 func NewSequencer(rules ...Rule) (Sequencer, error) {
 	s := &sequencer{}
 	s.SetSeed(uint64(time.Now().UnixNano()))
-	for _, rule := range append(defaultRules, rules...) {
+	for _, rule := range append(basicRules, rules...) {
 		rule(s)
 	}
 

@@ -6,7 +6,7 @@ import (
 )
 
 var (
-	ErrDictionaryTooSmall = errors.New(fmt.Sprintf("dictionary should have more than %d words", MinWords))
-	ErrNumWordsInvalid    = errors.New("number of words cannot be less than 1")
+	ErrDictionaryTooSmall = errors.New(fmt.Sprintf("dictionary cannot have less than %d words after word-length restrictions are applied", MinWordsInDictionary))
+	ErrNumWordsInvalid    = errors.New(fmt.Sprintf("number of words cannot be less than %d", MinNumWords))
 	ErrWordLengthInvalid  = errors.New("word-length rule invalid")
 )

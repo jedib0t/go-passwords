@@ -227,16 +227,16 @@ func TestSequencer_Stream(t *testing.T) {
 	ch := make(chan string, 1)
 	// streams all possible passwords into the channel in an async routine
 	go func() {
-		t.Logf("< streaming passwords ...")
+		//t.Logf("< streaming passwords ...")
 		err2 := s.Stream(ctx, ch)
 		assert.Nil(t, err2)
-		t.Logf("< streaming passwords ... done!")
+		//t.Logf("< streaming passwords ... done!")
 	}()
 
 	// listen on channel for passwords until channel is closed, or until timeout
 	pw, ok := "", true
 	var passwords []string
-	t.Logf("> receiving passwords ...")
+	//t.Logf("> receiving passwords ...")
 	for ok {
 		select {
 		case <-ctx.Done():
@@ -244,12 +244,12 @@ func TestSequencer_Stream(t *testing.T) {
 			ok = false
 		case pw, ok = <-ch:
 			if ok {
-				t.Logf("> ++ received %#v", pw)
+				//t.Logf("> ++ received %#v", pw)
 				passwords = append(passwords, pw)
 			}
 		}
 	}
-	t.Logf("> receiving passwords ... done!")
+	//t.Logf("> receiving passwords ... done!")
 
 	// verify received passwords
 	expectedPasswords := []string{
@@ -278,16 +278,16 @@ func TestSequencer_Stream_Limited(t *testing.T) {
 	ch := make(chan string, 1)
 	// streams all possible passwords into the channel in an async routine
 	go func() {
-		t.Logf("< streaming passwords ...")
+		//t.Logf("< streaming passwords ...")
 		err2 := s.Stream(ctx, ch, big.NewInt(5))
 		assert.Nil(t, err2)
-		t.Logf("< streaming passwords ... done!")
+		//t.Logf("< streaming passwords ... done!")
 	}()
 
 	// listen on channel for passwords until channel is closed, or until timeout
 	pw, ok := "", true
 	var passwords []string
-	t.Logf("> receiving passwords ...")
+	//t.Logf("> receiving passwords ...")
 	for ok {
 		select {
 		case <-ctx.Done():
@@ -295,12 +295,12 @@ func TestSequencer_Stream_Limited(t *testing.T) {
 			ok = false
 		case pw, ok = <-ch:
 			if ok {
-				t.Logf("> ++ received %#v", pw)
+				//t.Logf("> ++ received %#v", pw)
 				passwords = append(passwords, pw)
 			}
 		}
 	}
-	t.Logf("> receiving passwords ... done!")
+	//t.Logf("> receiving passwords ... done!")
 
 	// verify received passwords
 	expectedPasswords := []string{

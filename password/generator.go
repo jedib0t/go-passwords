@@ -38,7 +38,7 @@ type generator struct {
 func NewGenerator(rules ...Rule) (Generator, error) {
 	g := &generator{}
 	g.SetSeed(uint64(time.Now().UnixNano()))
-	for _, opt := range append(defaultRules, rules...) {
+	for _, opt := range append(basicRules, rules...) {
 		opt(g)
 	}
 

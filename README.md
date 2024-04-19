@@ -27,16 +27,16 @@ Passphrase & Password generation library for GoLang.
 <details>
 <summary>Output...</summary>
 <pre>
-Passphrase #  1: "Renest-Apod4-Yowing"
-Passphrase #  2: "Lapse-Diplex3-Wekas"
-Passphrase #  3: "Banzai-Duster8-Relock"
-Passphrase #  4: "Nulled-Mica5-Toads"
-Passphrase #  5: "Aughts5-Morro-Welter"
-Passphrase #  6: "Moth-Sigh-Pirate5"
-Passphrase #  7: "Nonart-Lambs2-Pilot"
-Passphrase #  8: "Umbles-Epilog3-Defuse"
-Passphrase #  9: "Lignin-Rayons-Rumens5"
-Passphrase # 10: "Chrism7-Flunks-Guise"
+Passphrase #  1: "Peage6-Blousy-Whaup"
+Passphrase #  2: "Crape0-Natter-Pecs"
+Passphrase #  3: "Facers-Razzed-Jupes6"
+Passphrase #  4: "Jingko1-Shell-Stupor"
+Passphrase #  5: "Nailer-Turgid-Sancta4"
+Passphrase #  6: "Rodeo5-Cysts-Pinons"
+Passphrase #  7: "Mind-Regina-Swinks9"
+Passphrase #  8: "Babas5-Lupous-Xylems"
+Passphrase #  9: "Ocreae-Fusel0-Jujube"
+Passphrase # 10: "Mirks6-Woofer-Lase"
 </pre>
 </details>
 
@@ -46,7 +46,7 @@ Passphrase # 10: "Chrism7-Flunks-Guise"
 		password.WithCharset(password.AllChars.WithoutAmbiguity().WithoutDuplicates()),
 		password.WithLength(12),
 		password.WithMinLowerCase(5),
-		password.WithMinpperCase(2),
+		password.WithMinUpperCase(2),
 		password.WithNumSymbols(1, 1),
 	)
 	if err != nil {
@@ -59,16 +59,16 @@ Passphrase # 10: "Chrism7-Flunks-Guise"
 <details>
 <summary>Output...</summary>
 <pre>
-Password #  1: "CmHii4zek_wU"
-Password #  2: "m+GicmQEnxkz"
-Password #  3: "FruTpkprFNR="
-Password #  4: "p@xjqBH3bbfi"
-Password #  5: "D(WadeVLTfhm"
-Password #  6: "uLpSFv%pMidL"
-Password #  7: "bbBQ*gypmhTx"
-Password #  8: "abshu4}HNpwE"
-Password #  9: "UjGpDsP{4mfi"
-Password # 10: "toKue=dvUPzz"
+Password #  1: "jQwRvL#oye7q"
+Password #  2: "T2WRwSbwghc^"
+Password #  3: "S@DxkUwkunhy"
+Password #  4: "NJ4wxhSygLm&"
+Password #  5: "phHfuqw*uAPq"
+Password #  6: "$3XDCoLXdeqq"
+Password #  7: "enzB*ENGhsQm"
+Password #  8: "ioCfs&cLJgyd"
+Password #  9: "obwEEEthM$MC"
+Password # 10: "kmQVb&fPqexj"
 </pre>
 </details>
 
@@ -111,7 +111,7 @@ Password # 10: "AAAAAAAK"
 ```golang
 	sequencer, err := password.NewSequencer(
 		password.WithCharset(password.Charset("AB")),
-		password.WithLength(5),
+		password.WithLength(4),
 	)
 	if err != nil {
 		panic(err.Error())
@@ -145,38 +145,22 @@ Password # 10: "AAAAAAAK"
 <details>
 <summary>Output...</summary>
 <pre>
-Password #  1: "AAAAA"
-Password #  2: "AAAAB"
-Password #  3: "AAABA"
-Password #  4: "AAABB"
-Password #  5: "AABAA"
-Password #  6: "AABAB"
-Password #  7: "AABBA"
-Password #  8: "AABBB"
-Password #  9: "ABAAA"
-Password # 10: "ABAAB"
-Password # 11: "ABABA"
-Password # 12: "ABABB"
-Password # 13: "ABBAA"
-Password # 14: "ABBAB"
-Password # 15: "ABBBA"
-Password # 16: "ABBBB"
-Password # 17: "BAAAA"
-Password # 18: "BAAAB"
-Password # 19: "BAABA"
-Password # 20: "BAABB"
-Password # 21: "BABAA"
-Password # 22: "BABAB"
-Password # 23: "BABBA"
-Password # 24: "BABBB"
-Password # 25: "BBAAA"
-Password # 26: "BBAAB"
-Password # 27: "BBABA"
-Password # 28: "BBABB"
-Password # 29: "BBBAA"
-Password # 30: "BBBAB"
-Password # 31: "BBBBA"
-Password # 32: "BBBBB"
+Password #  1: "AAAA"
+Password #  2: "AAAB"
+Password #  3: "AABA"
+Password #  4: "AABB"
+Password #  5: "ABAA"
+Password #  6: "ABAB"
+Password #  7: "ABBA"
+Password #  8: "ABBB"
+Password #  9: "BAAA"
+Password # 10: "BAAB"
+Password # 11: "BABA"
+Password # 12: "BABB"
+Password # 13: "BBAA"
+Password # 14: "BBAB"
+Password # 15: "BBBA"
+Password # 16: "BBBB"
 </pre>
 </details>
 
@@ -186,20 +170,20 @@ goos: linux
 goarch: amd64
 pkg: github.com/jedib0t/go-passwords/passphrase
 cpu: AMD Ryzen 9 5900X 12-Core Processor            
-BenchmarkGenerator_Generate-12    	 5252654	       221.8 ns/op	     135 B/op	       4 allocs/op
+BenchmarkGenerator_Generate-12    	 2862954	       393.5 ns/op	     167 B/op	       8 allocs/op
 PASS
-ok  	github.com/jedib0t/go-passwords/passphrase	1.410s
+ok  	github.com/jedib0t/go-passwords/passphrase	1.567s
 
 goos: linux
 goarch: amd64
 pkg: github.com/jedib0t/go-passwords/password
 cpu: AMD Ryzen 9 5900X 12-Core Processor            
-BenchmarkGenerator_Generate-12    	 6397098	       186.0 ns/op	      40 B/op	       2 allocs/op
-BenchmarkSequencer_GotoN-12       	 4321675	       273.4 ns/op	      32 B/op	       3 allocs/op
-BenchmarkSequencer_Next-12        	14045982	        83.89 ns/op	      16 B/op	       1 allocs/op
-BenchmarkSequencer_NextN-12       	 6548796	       183.2 ns/op	      32 B/op	       3 allocs/op
-BenchmarkSequencer_Prev-12        	13450102	        87.86 ns/op	      16 B/op	       1 allocs/op
-BenchmarkSequencer_PrevN-12       	 4230694	       277.4 ns/op	      32 B/op	       3 allocs/op
+BenchmarkGenerator_Generate-12    	 6413606	       185.3 ns/op	      40 B/op	       2 allocs/op
+BenchmarkSequencer_GotoN-12       	 4353010	       272.5 ns/op	      32 B/op	       3 allocs/op
+BenchmarkSequencer_Next-12        	13955396	        84.61 ns/op	      16 B/op	       1 allocs/op
+BenchmarkSequencer_NextN-12       	 6473270	       183.9 ns/op	      32 B/op	       3 allocs/op
+BenchmarkSequencer_Prev-12        	13106161	        87.22 ns/op	      16 B/op	       1 allocs/op
+BenchmarkSequencer_PrevN-12       	 3967755	       288.8 ns/op	      32 B/op	       3 allocs/op
 PASS
-ok  	github.com/jedib0t/go-passwords/password	8.239s
+ok  	github.com/jedib0t/go-passwords/password	8.192s
 ```

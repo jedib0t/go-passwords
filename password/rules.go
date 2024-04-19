@@ -4,7 +4,7 @@ package password
 type Rule func(any)
 
 var (
-	defaultRules = []Rule{
+	basicRules = []Rule{
 		WithCharset(AlphaNumeric),
 		WithLength(8),
 	}
