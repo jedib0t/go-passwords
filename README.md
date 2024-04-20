@@ -170,7 +170,7 @@ goos: linux
 goarch: amd64
 pkg: github.com/jedib0t/go-passwords/passphrase
 cpu: AMD Ryzen 9 5900X 12-Core Processor            
-BenchmarkGenerator_Generate-12    	 3015926	       392.7 ns/op	     167 B/op	       8 allocs/op
+BenchmarkGenerator_Generate-12    	 4030634	       292.0 ns/op	     144 B/op	       5 allocs/op
 PASS
 ok  	github.com/jedib0t/go-passwords/passphrase	1.603s
 

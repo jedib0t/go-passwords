@@ -11,8 +11,9 @@ import (
 )
 
 const (
-	MinNumWords          = 2
 	MinWordsInDictionary = 256
+	NumWordsMin          = 2
+	NumWordsMax          = 32
 )
 
 type Generator interface {
@@ -48,22 +49,13 @@ func NewGenerator(rules ...Rule) (Generator, error) {
 func (g *generator) Generate() string {
 	var words []string
 
-	// generate words
+	// select words
 	for idx := 0; idx < g.numWords; idx++ {
 		var word string
 		for word == "" || slices.Contains(words, word) {
 			word = g.dictionary[g.rng.IntN(len(g.dictionary))]
 		}
 		words = append(words, word)
-	}
-	// capitalize all words
-	if g.capitalize {
-		for idx := range words {
-			r, size := utf8.DecodeRuneInString(words[idx])
-			if r != utf8.RuneError {
-				words[idx] = string(unicode.ToUpper(r)) + words[idx][size:]
-			}
-		}
 	}
 	// inject a random number after one of the words
 	if g.withNumber {
@@ -83,15 +75,30 @@ func (g *generator) sanitize() (Generator, error) {
 	if g.wordLenMin < 1 || g.wordLenMin > g.wordLenMax {
 		return nil, ErrWordLengthInvalid
 	}
-	// filter the dictionary and remove too-short or too-long words
+
+	// remove words that are too-short & too-long
 	slices.DeleteFunc(g.dictionary, func(word string) bool {
 		return len(word) < g.wordLenMin || len(word) > g.wordLenMax
 	})
 	if len(g.dictionary) < MinWordsInDictionary {
 		return nil, ErrDictionaryTooSmall
 	}
-	if g.numWords < MinNumWords {
-		return nil, ErrNumWordsInvalid
+
+	// capitalize all words in the dictionary ahead of time
+	if g.capitalize {
+		for idx := range g.dictionary {
+			r, size := utf8.DecodeRuneInString(g.dictionary[idx])
+			if r != utf8.RuneError {
+				g.dictionary[idx] = string(unicode.ToUpper(r)) + g.dictionary[idx][size:]
+			}
+		}
+	}
+
+	if g.numWords < NumWordsMin {
+		return nil, ErrNumWordsTooSmall
+	}
+	if g.numWords > NumWordsMax {
+		return nil, ErrNumWordsTooLarge
 	}
 	return g, nil
 }
