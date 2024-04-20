@@ -1,4 +1,4 @@
-package password
+package sequencer
 
 import (
 	"context"
@@ -6,6 +6,8 @@ import (
 	"math/big"
 	"math/rand/v2"
 	"sync"
+
+	"github.com/jedib0t/go-passwords/charset"
 )
 
 var (
@@ -62,9 +64,8 @@ type sequencer struct {
 	rng            *rand.Rand
 }
 
-// NewSequencer returns a password sequencer that implements the Sequencer
-// interface.
-func NewSequencer(rules ...Rule) (Sequencer, error) {
+// New returns a password Sequencer.
+func New(rules ...Rule) (Sequencer, error) {
 	s := &sequencer{}
 	for _, rule := range append(basicRules, rules...) {
 		rule(s)
@@ -74,7 +75,7 @@ func NewSequencer(rules ...Rule) (Sequencer, error) {
 	s.base = big.NewInt(int64(len(s.charset)))
 	s.charsetLen = len(s.charset)
 	s.charsetMaxIdx = len(s.charset) - 1
-	s.maxWords = MaximumPossibleWords(Charset(s.charset), s.numChars)
+	s.maxWords = MaximumPossibleWords(charset.Charset(s.charset), s.numChars)
 	s.n = big.NewInt(0)
 	s.nMax = new(big.Int).Sub(s.maxWords, biOne)
 	s.password = make([]int, s.numChars)
@@ -308,3 +309,5 @@ func (s *sequencer) prevAtIndex(idx int) bool {
 	}
 	return false
 }
+
+func (s *sequencer) ruleEnforcer() {}

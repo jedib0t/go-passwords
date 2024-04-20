@@ -3,7 +3,7 @@
 default: test
 
 bench:
-	go test -bench=. -benchmem ./passphrase ./password
+	go test -bench=. -benchmem ./passphrase ./password ./password/sequencer
 
 cyclo:
 	gocyclo -over 13 ./*/*.go

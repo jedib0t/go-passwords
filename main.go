@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/jedib0t/go-passwords/charset"
 	"github.com/jedib0t/go-passwords/passphrase"
 	"github.com/jedib0t/go-passwords/passphrase/dictionaries"
 	"github.com/jedib0t/go-passwords/password"
+	"github.com/jedib0t/go-passwords/password/sequencer"
 )
 
 func main() {
@@ -29,7 +31,7 @@ func main() {
 }
 
 func passphraseGenerator() {
-	generator, err := passphrase.NewGenerator(
+	g, err := passphrase.NewGenerator(
 		passphrase.WithCapitalizedWords(true),
 		passphrase.WithDictionary(dictionaries.English()),
 		passphrase.WithNumWords(3),
@@ -41,13 +43,13 @@ func passphraseGenerator() {
 		panic(err.Error())
 	}
 	for idx := 1; idx <= 10; idx++ {
-		fmt.Printf("Passphrase #%3d: %#v\n", idx, generator.Generate())
+		fmt.Printf("Passphrase #%3d: %#v\n", idx, g.Generate())
 	}
 }
 
 func passwordGenerator() {
-	generator, err := password.NewGenerator(
-		password.WithCharset(password.AllChars.WithoutAmbiguity().WithoutDuplicates()),
+	g, err := password.NewGenerator(
+		password.WithCharset(charset.AllChars.WithoutAmbiguity().WithoutDuplicates()),
 		password.WithLength(12),
 		password.WithMinLowerCase(5),
 		password.WithMinUpperCase(2),
@@ -57,32 +59,32 @@ func passwordGenerator() {
 		panic(err.Error())
 	}
 	for idx := 1; idx <= 10; idx++ {
-		fmt.Printf("Password #%3d: %#v\n", idx, generator.Generate())
+		fmt.Printf("Password #%3d: %#v\n", idx, g.Generate())
 	}
 }
 
 func passwordSequencer() {
-	sequencer, err := password.NewSequencer(
-		password.WithCharset(password.AllChars.WithoutAmbiguity()),
-		password.WithLength(8),
+	s, err := sequencer.New(
+		sequencer.WithCharset(charset.AllChars.WithoutAmbiguity()),
+		sequencer.WithLength(8),
 	)
 	if err != nil {
 		panic(err.Error())
 	}
 	for idx := 1; idx <= 10; idx++ {
-		fmt.Printf("Password #%3d: %#v\n", idx, sequencer.Get())
+		fmt.Printf("Password #%3d: %#v\n", idx, s.Get())
 
-		if !sequencer.HasNext() {
+		if !s.HasNext() {
 			break
 		}
-		sequencer.Next()
+		s.Next()
 	}
 }
 
 func passwordSequencerStreaming() {
-	sequencer, err := password.NewSequencer(
-		password.WithCharset(password.Charset("AB")),
-		password.WithLength(4),
+	s, err := sequencer.New(
+		sequencer.WithCharset(charset.Charset("AB")),
+		sequencer.WithLength(4),
 	)
 	if err != nil {
 		panic(err.Error())
@@ -93,7 +95,7 @@ func passwordSequencerStreaming() {
 
 	chPasswords := make(chan string, 1)
 	go func() {
-		err := sequencer.Stream(ctx, chPasswords)
+		err := s.Stream(ctx, chPasswords)
 		if err != nil {
 			panic(err.Error())
 		}

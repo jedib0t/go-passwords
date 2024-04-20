@@ -1,4 +1,4 @@
-package password
+package sequencer
 
 import (
 	"context"
@@ -9,12 +9,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jedib0t/go-passwords/charset"
 	"github.com/stretchr/testify/assert"
 )
 
 func BenchmarkSequencer_GotoN(b *testing.B) {
-	s, err := NewSequencer(
-		WithCharset(AlphaNumeric.WithoutAmbiguity().WithoutDuplicates()),
+	s, err := New(
+		WithCharset(charset.AlphaNumeric.WithoutAmbiguity().WithoutDuplicates()),
 		WithLength(12),
 	)
 	assert.Nil(b, err)
@@ -31,8 +32,8 @@ func BenchmarkSequencer_GotoN(b *testing.B) {
 }
 
 func BenchmarkSequencer_Next(b *testing.B) {
-	s, err := NewSequencer(
-		WithCharset(AlphaNumeric.WithoutAmbiguity().WithoutDuplicates()),
+	s, err := New(
+		WithCharset(charset.AlphaNumeric.WithoutAmbiguity().WithoutDuplicates()),
 		WithLength(12),
 	)
 	assert.Nil(b, err)
@@ -45,8 +46,8 @@ func BenchmarkSequencer_Next(b *testing.B) {
 }
 
 func BenchmarkSequencer_NextN(b *testing.B) {
-	s, err := NewSequencer(
-		WithCharset(AlphaNumeric.WithoutAmbiguity().WithoutDuplicates()),
+	s, err := New(
+		WithCharset(charset.AlphaNumeric.WithoutAmbiguity().WithoutDuplicates()),
 		WithLength(12),
 	)
 	assert.Nil(b, err)
@@ -60,8 +61,8 @@ func BenchmarkSequencer_NextN(b *testing.B) {
 }
 
 func BenchmarkSequencer_Prev(b *testing.B) {
-	s, err := NewSequencer(
-		WithCharset(AlphaNumeric.WithoutAmbiguity().WithoutDuplicates()),
+	s, err := New(
+		WithCharset(charset.AlphaNumeric.WithoutAmbiguity().WithoutDuplicates()),
 		WithLength(12),
 	)
 	assert.Nil(b, err)
@@ -74,8 +75,8 @@ func BenchmarkSequencer_Prev(b *testing.B) {
 }
 
 func BenchmarkSequencer_PrevN(b *testing.B) {
-	s, err := NewSequencer(
-		WithCharset(AlphaNumeric.WithoutAmbiguity().WithoutDuplicates()),
+	s, err := New(
+		WithCharset(charset.AlphaNumeric.WithoutAmbiguity().WithoutDuplicates()),
 		WithLength(12),
 	)
 	assert.Nil(b, err)
@@ -89,14 +90,14 @@ func BenchmarkSequencer_PrevN(b *testing.B) {
 }
 
 func TestSequencer(t *testing.T) {
-	s, err := NewSequencer(
+	s, err := New(
 		WithCharset(""),
 		WithLength(3),
 	)
 	assert.Nil(t, s)
 	assert.NotNil(t, err)
 	assert.True(t, errors.Is(err, ErrEmptyCharset))
-	s, err = NewSequencer(
+	s, err = New(
 		WithCharset("AB"),
 		WithLength(0),
 	)
@@ -104,7 +105,7 @@ func TestSequencer(t *testing.T) {
 	assert.NotNil(t, err)
 	assert.True(t, errors.Is(err, ErrZeroLenPassword))
 
-	s, err = NewSequencer(
+	s, err = New(
 		WithCharset("AB"),
 		WithLength(3),
 	)
@@ -171,7 +172,7 @@ func TestSequencer(t *testing.T) {
 }
 
 func TestSequencer_GotoN(t *testing.T) {
-	s, err := NewSequencer(
+	s, err := New(
 		WithCharset("AB"),
 		WithLength(3),
 	)
@@ -184,7 +185,7 @@ func TestSequencer_GotoN(t *testing.T) {
 	assert.NotNil(t, err)
 	assert.True(t, errors.Is(err, ErrInvalidN))
 
-	s, err = NewSequencer(
+	s, err = New(
 		WithCharset("AB"),
 		WithLength(4),
 	)
@@ -215,7 +216,7 @@ func TestSequencer_GotoN(t *testing.T) {
 }
 
 func TestSequencer_Stream(t *testing.T) {
-	s, err := NewSequencer(
+	s, err := New(
 		WithCharset("AB"),
 		WithLength(3),
 	)
@@ -266,7 +267,7 @@ func TestSequencer_Stream(t *testing.T) {
 }
 
 func TestSequencer_Stream_Limited(t *testing.T) {
-	s, err := NewSequencer(
+	s, err := New(
 		WithCharset("AB"),
 		WithLength(3),
 	)

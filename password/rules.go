@@ -1,36 +1,28 @@
 package password
 
+import "github.com/jedib0t/go-passwords/charset"
+
 // Rule controls how the Generator/Sequencer generates passwords.
-type Rule func(any)
+type Rule func(g *generator)
 
 var (
 	basicRules = []Rule{
-		WithCharset(AlphaNumeric),
-		WithLength(8),
+		WithCharset(charset.AllChars),
+		WithLength(12),
 	}
 )
 
 // WithCharset sets the Charset the Generator/Sequencer can use.
-func WithCharset(c Charset) Rule {
-	return func(a any) {
-		switch v := a.(type) {
-		case *generator:
-			v.charset = []rune(c)
-		case *sequencer:
-			v.charset = []rune(c)
-		}
+func WithCharset(c charset.Charset) Rule {
+	return func(g *generator) {
+		g.charset = []rune(c)
 	}
 }
 
 // WithLength sets the length of the generated password.
 func WithLength(l int) Rule {
-	return func(a any) {
-		switch v := a.(type) {
-		case *generator:
-			v.numChars = l
-		case *sequencer:
-			v.numChars = l
-		}
+	return func(g *generator) {
+		g.numChars = l
 	}
 }
 
@@ -39,11 +31,8 @@ func WithLength(l int) Rule {
 //
 // Note: This works only on a Generator and is ineffective with a Sequencer.
 func WithMinLowerCase(min int) Rule {
-	return func(a any) {
-		switch v := a.(type) {
-		case *generator:
-			v.minLowerCase = min
-		}
+	return func(g *generator) {
+		g.minLowerCase = min
 	}
 }
 
@@ -52,11 +41,8 @@ func WithMinLowerCase(min int) Rule {
 //
 // Note: This works only on a Generator and is ineffective with a Sequencer.
 func WithMinUpperCase(min int) Rule {
-	return func(a any) {
-		switch v := a.(type) {
-		case *generator:
-			v.minUpperCase = min
-		}
+	return func(g *generator) {
+		g.minUpperCase = min
 	}
 }
 
@@ -76,11 +62,8 @@ func WithNumSymbols(min, max int) Rule {
 		min = max
 	}
 
-	return func(a any) {
-		switch v := a.(type) {
-		case *generator:
-			v.minSymbols = min
-			v.maxSymbols = max
-		}
+	return func(g *generator) {
+		g.minSymbols = min
+		g.maxSymbols = max
 	}
 }

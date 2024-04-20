@@ -9,7 +9,7 @@ Passphrase & Password generation library for GoLang.
 
 ## Passphrases
 ```golang
-	generator, err := passphrase.NewGenerator(
+	g, err := passphrase.NewGenerator(
 		passphrase.WithCapitalizedWords(true),
 		passphrase.WithDictionary(dictionaries.English()),
 		passphrase.WithNumWords(3),
@@ -21,7 +21,7 @@ Passphrase & Password generation library for GoLang.
 		panic(err.Error())
 	}
 	for idx := 1; idx <= 10; idx++ {
-		fmt.Printf("Passphrase #%3d: %#v\n", idx, generator.Generate())
+		fmt.Printf("Passphrase #%3d: %#v\n", idx, g.Generate())
 	}
 ```
 <details>
@@ -42,8 +42,8 @@ Passphrase # 10: "Mirks6-Woofer-Lase"
 
 ## Passwords
 ```golang
-	generator, err := password.NewGenerator(
-		password.WithCharset(password.AllChars.WithoutAmbiguity().WithoutDuplicates()),
+	g, err := password.NewGenerator(
+		password.WithCharset(charset.AllChars.WithoutAmbiguity().WithoutDuplicates()),
 		password.WithLength(12),
 		password.WithMinLowerCase(5),
 		password.WithMinUpperCase(2),
@@ -53,7 +53,7 @@ Passphrase # 10: "Mirks6-Woofer-Lase"
 		panic(err.Error())
 	}
 	for idx := 1; idx <= 10; idx++ {
-		fmt.Printf("Password #%3d: %#v\n", idx, generator.Generate())
+		fmt.Printf("Password #%3d: %#v\n", idx, g.Generate())
 	}
 ```
 <details>
@@ -75,20 +75,20 @@ Password # 10: "kmQVb&fPqexj"
 ### Sequential Passwords
 
 ```golang
-	sequencer, err := password.NewSequencer(
-		password.WithCharset(password.AllChars.WithoutAmbiguity()),
-		password.WithLength(8),
+	s, err := sequencer.New(
+		sequencer.WithCharset(charset.AllChars.WithoutAmbiguity()),
+		sequencer.WithLength(8),
 	)
 	if err != nil {
 		panic(err.Error())
 	}
 	for idx := 1; idx <= 10; idx++ {
-		fmt.Printf("Password #%3d: %#v\n", idx, sequencer.Get())
+		fmt.Printf("Password #%3d: %#v\n", idx, s.Get())
 
-		if !sequencer.HasNext() {
+		if !s.HasNext() {
 			break
 		}
-		sequencer.Next()
+		s.Next()
 	}
 ```
 <details>
@@ -109,9 +109,9 @@ Password # 10: "AAAAAAAK"
 
 #### Streamed (for async processing)
 ```golang
-	sequencer, err := password.NewSequencer(
-		password.WithCharset(password.Charset("AB")),
-		password.WithLength(4),
+	s, err := sequencer.New(
+		sequencer.WithCharset(charset.Charset("AB")),
+		sequencer.WithLength(4),
 	)
 	if err != nil {
 		panic(err.Error())
@@ -122,7 +122,7 @@ Password # 10: "AAAAAAAK"
 
 	chPasswords := make(chan string, 1)
 	go func() {
-		err := sequencer.Stream(ctx, chPasswords)
+		err := s.Stream(ctx, chPasswords)
 		if err != nil {
 			panic(err.Error())
 		}
@@ -170,20 +170,27 @@ goos: linux
 goarch: amd64
 pkg: github.com/jedib0t/go-passwords/passphrase
 cpu: AMD Ryzen 9 5900X 12-Core Processor            
-BenchmarkGenerator_Generate-12    	 2862954	       393.5 ns/op	     167 B/op	       8 allocs/op
+BenchmarkGenerator_Generate-12    	 3015926	       392.7 ns/op	     167 B/op	       8 allocs/op
 PASS
-ok  	github.com/jedib0t/go-passwords/passphrase	1.567s
+ok  	github.com/jedib0t/go-passwords/passphrase	1.603s
 
 goos: linux
 goarch: amd64
 pkg: github.com/jedib0t/go-passwords/password
 cpu: AMD Ryzen 9 5900X 12-Core Processor            
-BenchmarkGenerator_Generate-12    	 6413606	       185.3 ns/op	      40 B/op	       2 allocs/op
-BenchmarkSequencer_GotoN-12       	 4353010	       272.5 ns/op	      32 B/op	       3 allocs/op
-BenchmarkSequencer_Next-12        	13955396	        84.61 ns/op	      16 B/op	       1 allocs/op
-BenchmarkSequencer_NextN-12       	 6473270	       183.9 ns/op	      32 B/op	       3 allocs/op
-BenchmarkSequencer_Prev-12        	13106161	        87.22 ns/op	      16 B/op	       1 allocs/op
-BenchmarkSequencer_PrevN-12       	 3967755	       288.8 ns/op	      32 B/op	       3 allocs/op
+BenchmarkGenerator_Generate-12    	 6263398	       187.5 ns/op	      40 B/op	       2 allocs/op
 PASS
-ok  	github.com/jedib0t/go-passwords/password	8.192s
+ok  	github.com/jedib0t/go-passwords/password	1.375s
+
+goos: linux
+goarch: amd64
+pkg: github.com/jedib0t/go-passwords/password/sequencer
+cpu: AMD Ryzen 9 5900X 12-Core Processor            
+BenchmarkSequencer_GotoN-12    	 4355002	       274.6 ns/op	      32 B/op	       3 allocs/op
+BenchmarkSequencer_Next-12     	13614666	        88.99 ns/op	      16 B/op	       1 allocs/op
+BenchmarkSequencer_NextN-12    	 6216072	       187.2 ns/op	      32 B/op	       3 allocs/op
+BenchmarkSequencer_Prev-12     	13569340	        87.69 ns/op	      16 B/op	       1 allocs/op
+BenchmarkSequencer_PrevN-12    	 4230654	       277.9 ns/op	      32 B/op	       3 allocs/op
+PASS
+ok  	github.com/jedib0t/go-passwords/password/sequencer	6.888s
 ```

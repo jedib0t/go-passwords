@@ -6,12 +6,13 @@ import (
 	"testing"
 	"unicode"
 
+	"github.com/jedib0t/go-passwords/charset"
 	"github.com/stretchr/testify/assert"
 )
 
 func BenchmarkGenerator_Generate(b *testing.B) {
 	g, err := NewGenerator(
-		WithCharset(AlphaNumeric.WithoutAmbiguity().WithoutDuplicates()),
+		WithCharset(charset.AlphaNumeric.WithoutAmbiguity().WithoutDuplicates()),
 		WithLength(12),
 	)
 	assert.Nil(b, err)
@@ -24,7 +25,7 @@ func BenchmarkGenerator_Generate(b *testing.B) {
 
 func TestGenerator_Generate(t *testing.T) {
 	g, err := NewGenerator(
-		WithCharset(AlphaNumeric.WithoutAmbiguity().WithoutDuplicates()),
+		WithCharset(charset.AlphaNumeric.WithoutAmbiguity().WithoutDuplicates()),
 		WithLength(12),
 	)
 	assert.Nil(t, err)
@@ -60,7 +61,7 @@ func TestGenerator_Generate(t *testing.T) {
 
 func TestGenerator_Generate_WithAMixOfEverything(t *testing.T) {
 	g, err := NewGenerator(
-		WithCharset(AllChars.WithoutAmbiguity().WithoutDuplicates()),
+		WithCharset(charset.AllChars.WithoutAmbiguity().WithoutDuplicates()),
 		WithLength(12),
 		WithMinLowerCase(5),
 		WithMinUpperCase(2),
@@ -94,7 +95,7 @@ func TestGenerator_Generate_WithAMixOfEverything(t *testing.T) {
 		assert.True(t, numLowerCase >= 5, password)
 		numUpperCase := len(filterRunes([]rune(password), unicode.IsUpper))
 		assert.True(t, numUpperCase >= 2, password)
-		numSymbols := len(filterRunes([]rune(password), Symbols.Contains))
+		numSymbols := len(filterRunes([]rune(password), charset.Symbols.Contains))
 		assert.True(t, numSymbols == 1, password)
 	}
 	if !slices.Equal(expectedPasswords, actualPasswords) {
@@ -107,7 +108,7 @@ func TestGenerator_Generate_WithAMixOfEverything(t *testing.T) {
 func TestGenerator_Generate_WithSymbols(t *testing.T) {
 	t.Run("min 0 max 3", func(t *testing.T) {
 		g, err := NewGenerator(
-			WithCharset(Charset("abcdef123456-+!@#$%").WithoutAmbiguity().WithoutDuplicates()),
+			WithCharset(charset.Charset("abcdef123456-+!@#$%").WithoutAmbiguity().WithoutDuplicates()),
 			WithLength(12),
 			WithNumSymbols(0, 3),
 		)
@@ -148,7 +149,7 @@ func TestGenerator_Generate_WithSymbols(t *testing.T) {
 	t.Run("min X max 3", func(t *testing.T) {
 		for _, x := range []int{0, 1, 2, 3} {
 			g, err := NewGenerator(
-				WithCharset(Charset("abcdef123456-+!@#$%").WithoutAmbiguity().WithoutDuplicates()),
+				WithCharset(charset.Charset("abcdef123456-+!@#$%").WithoutAmbiguity().WithoutDuplicates()),
 				WithLength(12),
 				WithNumSymbols(x, 3),
 			)
@@ -169,7 +170,7 @@ func TestGenerator_Generate_WithSymbols(t *testing.T) {
 	t.Run("min X max X", func(t *testing.T) {
 		for _, x := range []int{0, 4, 6, 8, 12} {
 			g, err := NewGenerator(
-				WithCharset(Charset("abcdef123456-+!@#$%").WithoutAmbiguity().WithoutDuplicates()),
+				WithCharset(charset.Charset("abcdef123456-+!@#$%").WithoutAmbiguity().WithoutDuplicates()),
 				WithLength(12),
 				WithNumSymbols(x, x),
 			)
@@ -203,7 +204,7 @@ func TestGenerator_numSymbolsToGenerate(t *testing.T) {
 func getNumSymbols(pw string) int {
 	rsp := 0
 	for _, r := range pw {
-		if Symbols.Contains(r) {
+		if charset.Symbols.Contains(r) {
 			rsp++
 		}
 	}

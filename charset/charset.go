@@ -1,4 +1,4 @@
-package password
+package charset
 
 import (
 	"math/rand"

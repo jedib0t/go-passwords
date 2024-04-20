@@ -1,8 +1,10 @@
 package password
 
+import "github.com/jedib0t/go-passwords/charset"
+
 var (
 	defaultGenerator, _ = NewGenerator(
-		WithCharset(AllChars.WithoutAmbiguity()),
+		WithCharset(charset.AllChars.WithoutAmbiguity()),
 		WithLength(12),
 		WithMinLowerCase(3),
 		WithMinUpperCase(1),

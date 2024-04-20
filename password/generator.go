@@ -5,6 +5,8 @@ import (
 	"sync"
 	"time"
 	"unicode"
+
+	"github.com/jedib0t/go-passwords/charset"
 )
 
 var (
@@ -45,8 +47,8 @@ func NewGenerator(rules ...Rule) (Generator, error) {
 	// split the charsets
 	g.charsetCaseLower = filterRunes(g.charset, unicode.IsLower)
 	g.charsetCaseUpper = filterRunes(g.charset, unicode.IsUpper)
-	g.charsetNonSymbols = filterRunes(g.charset, func(r rune) bool { return !Symbols.Contains(r) })
-	g.charsetSymbols = filterRunes(g.charset, Symbols.Contains)
+	g.charsetNonSymbols = filterRunes(g.charset, func(r rune) bool { return !charset.Symbols.Contains(r) })
+	g.charsetSymbols = filterRunes(g.charset, charset.Symbols.Contains)
 
 	// create a storage pool with enough objects to support enough parallelism
 	g.pool = &sync.Pool{
@@ -110,6 +112,8 @@ func (g *generator) numSymbolsToGenerate() int {
 	}
 	return 0
 }
+
+func (g *generator) ruleEnforcer() {}
 
 func (g *generator) sanitize() (Generator, error) {
 	// validate the inputs
