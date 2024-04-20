@@ -6,7 +6,6 @@ import (
 	"math/big"
 	"math/rand/v2"
 	"sync"
-	"time"
 )
 
 var (
@@ -14,12 +13,16 @@ var (
 	biOne  = big.NewInt(1)
 )
 
+// Sequencer is a deterministic Password Generator that generates all possible
+// combinations of passwords for a Charset and defined number of characters in
+// the password. It lets you move back and forth through the list of possible
+// passwords, and involves no RNG.
 type Sequencer interface {
 	// First moves to the first possible password and returns the same.
 	First() string
 	// Get returns the current password in the sequence.
 	Get() string
-	// GetN returns the password at location N, given 0 <= N < MaxPossibleWords
+	// GetN returns the value for N (location in list of possible passwords).
 	GetN() *big.Int
 	// GotoN overrides N.
 	GotoN(n *big.Int) (string, error)
@@ -37,8 +40,6 @@ type Sequencer interface {
 	PrevN(n *big.Int) string
 	// Reset cleans up state and moves to the first possible word.
 	Reset()
-	// SetSeed overrides the seed value for the RNG.
-	SetSeed(seed uint64)
 	// Stream sends all possible passwords in order to the given channel. If you
 	// want to limit output, pass in a *big.Int with the number of passwords you
 	// want to be generated and streamed.
@@ -65,7 +66,6 @@ type sequencer struct {
 // interface.
 func NewSequencer(rules ...Rule) (Sequencer, error) {
 	s := &sequencer{}
-	s.SetSeed(uint64(time.Now().UnixNano()))
 	for _, rule := range append(basicRules, rules...) {
 		rule(s)
 	}
@@ -110,7 +110,7 @@ func (s *sequencer) Get() string {
 	return s.get()
 }
 
-// GetN returns the password at location N, given 0 <= N <= MaxPossibleWords
+// GetN returns the current location in the list of possible passwords.
 func (s *sequencer) GetN() *big.Int {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
@@ -118,7 +118,7 @@ func (s *sequencer) GetN() *big.Int {
 	return new(big.Int).Set(s.n)
 }
 
-// GotoN overrides N.
+// GotoN overrides the current location in the list of possible passwords.
 func (s *sequencer) GotoN(n *big.Int) (string, error) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
@@ -199,14 +199,6 @@ func (s *sequencer) PrevN(n *big.Int) string {
 // Reset cleans up state and moves to the first possible word.
 func (s *sequencer) Reset() {
 	s.First()
-}
-
-// SetSeed changes the seed value of the RNG.
-func (s *sequencer) SetSeed(seed uint64) {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-
-	s.rng = rand.New(rand.NewPCG(seed, seed+100))
 }
 
 // Stream sends all possible passwords in order to the given channel. If you
