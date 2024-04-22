@@ -113,8 +113,6 @@ func (g *generator) numSymbolsToGenerate() int {
 	return 0
 }
 
-func (g *generator) ruleEnforcer() {}
-
 func (g *generator) sanitize() (Generator, error) {
 	// validate the inputs
 	if len(g.charset) == 0 {

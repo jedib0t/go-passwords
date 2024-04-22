@@ -8,6 +8,21 @@
 Passphrase & Password generation library for GoLang.
 
 ## Passphrases
+
+Passphrases are made up of 2 or more words connected by a separator and may have
+capitalized words, and numbers. These are easier for humans to remember compared
+to passwords.
+
+The `passphrase` package helps generate these and supports the following rules
+that be used during generation:
+* Capitalize words used in the passphrase (foo -> Foo)
+* Use a custom dictionary of words instead of built-in English dictionary
+* Use X number of Words
+* Insert a random number behind one of the words
+* Use a custom separator
+* Use words with a specific length-range
+
+### Example
 ```golang
 	g, err := passphrase.NewGenerator(
 		passphrase.WithCapitalizedWords(true),
@@ -41,6 +56,18 @@ Passphrase # 10: "Mirks6-Woofer-Lase"
 </details>
 
 ## Passwords
+
+Passwords are a random amalgamation of characters.
+
+The `password` package helps generate these and supports the following rules
+that be used during generation:
+* Use a specific character-set
+* Restrict the length of the password
+* Use *at least* X lower-case characters
+* Use *at least* X upper-case characters
+* Use *at least* X and *at most* Y symbols
+
+### Example
 ```golang
 	g, err := password.NewGenerator(
 		password.WithCharset(charset.AllChars.WithoutAmbiguity().WithoutDuplicates()),
@@ -72,23 +99,30 @@ Password # 10: "kmQVb&fPqexj"
 </pre>
 </details>
 
-### Sequential Passwords
+## Odometer
 
+Odometer helps generate all possible string combinations of characters given a
+list of characters and the expected length of the string.
+
+The `odometer` package provides optimal interfaces to move through the list:
+* Decrement()
+* DecrementN(n)
+* GoTo(n)
+* Increment()
+* IncrementN(n)
+* etc.
+
+### Example
 ```golang
-	s, err := sequencer.New(
-		sequencer.WithCharset(charset.AllChars.WithoutAmbiguity()),
-		sequencer.WithLength(8),
-	)
-	if err != nil {
-		panic(err.Error())
-	}
-	for idx := 1; idx <= 10; idx++ {
-		fmt.Printf("Password #%3d: %#v\n", idx, s.Get())
+	o := odometer.New(charset.AlphabetsUpper, 8)
 
-		if !s.HasNext() {
+	for idx := 1; idx <= 10; idx++ {
+		fmt.Printf("Password #%3d: %#v\n", idx, o.String())
+
+		if o.AtEnd() {
 			break
 		}
-		s.Next()
+		o.Increment()
 	}
 ```
 <details>
@@ -102,65 +136,8 @@ Password #  5: "AAAAAAAE"
 Password #  6: "AAAAAAAF"
 Password #  7: "AAAAAAAG"
 Password #  8: "AAAAAAAH"
-Password #  9: "AAAAAAAJ"
-Password # 10: "AAAAAAAK"
-</pre>
-</details>
-
-#### Streamed (for async processing)
-```golang
-	s, err := sequencer.New(
-		sequencer.WithCharset(charset.Charset("AB")),
-		sequencer.WithLength(4),
-	)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-	defer cancel()
-
-	chPasswords := make(chan string, 1)
-	go func() {
-		err := s.Stream(ctx, chPasswords)
-		if err != nil {
-			panic(err.Error())
-		}
-	}()
-
-	idx := 0
-	for {
-		select {
-		case <-ctx.Done():
-			panic("timed out")
-		case pw, ok := <-chPasswords:
-			if !ok {
-				return
-			}
-			idx++
-			fmt.Printf("Password #%3d: %#v\n", idx, pw)
-		}
-	}
-```
-<details>
-<summary>Output...</summary>
-<pre>
-Password #  1: "AAAA"
-Password #  2: "AAAB"
-Password #  3: "AABA"
-Password #  4: "AABB"
-Password #  5: "ABAA"
-Password #  6: "ABAB"
-Password #  7: "ABBA"
-Password #  8: "ABBB"
-Password #  9: "BAAA"
-Password # 10: "BAAB"
-Password # 11: "BABA"
-Password # 12: "BABB"
-Password # 13: "BBAA"
-Password # 14: "BBAB"
-Password # 15: "BBBA"
-Password # 16: "BBBB"
+Password #  9: "AAAAAAAI"
+Password # 10: "AAAAAAAJ"
 </pre>
 </details>
 
@@ -170,27 +147,30 @@ goos: linux
 goarch: amd64
 pkg: github.com/jedib0t/go-passwords/passphrase
 cpu: AMD Ryzen 9 5900X 12-Core Processor            
-BenchmarkGenerator_Generate-12    	 4030634	       292.0 ns/op	     144 B/op	       5 allocs/op
+BenchmarkGenerator_Generate-12    	 3979081	       294.8 ns/op	     144 B/op	       5 allocs/op
 PASS
-ok  	github.com/jedib0t/go-passwords/passphrase	1.603s
+ok  	github.com/jedib0t/go-passwords/passphrase	1.503s
 
 goos: linux
 goarch: amd64
 pkg: github.com/jedib0t/go-passwords/password
 cpu: AMD Ryzen 9 5900X 12-Core Processor            
-BenchmarkGenerator_Generate-12    	 6263398	       187.5 ns/op	      40 B/op	       2 allocs/op
+BenchmarkGenerator_Generate-12    	 5977402	       199.4 ns/op	      40 B/op	       2 allocs/op
 PASS
-ok  	github.com/jedib0t/go-passwords/password	1.375s
+ok  	github.com/jedib0t/go-passwords/password	1.414s
 
 goos: linux
 goarch: amd64
-pkg: github.com/jedib0t/go-passwords/password/sequencer
+pkg: github.com/jedib0t/go-passwords/odometer
 cpu: AMD Ryzen 9 5900X 12-Core Processor            
-BenchmarkSequencer_GotoN-12    	 4355002	       274.6 ns/op	      32 B/op	       3 allocs/op
-BenchmarkSequencer_Next-12     	13614666	        88.99 ns/op	      16 B/op	       1 allocs/op
-BenchmarkSequencer_NextN-12    	 6216072	       187.2 ns/op	      32 B/op	       3 allocs/op
-BenchmarkSequencer_Prev-12     	13569340	        87.69 ns/op	      16 B/op	       1 allocs/op
-BenchmarkSequencer_PrevN-12    	 4230654	       277.9 ns/op	      32 B/op	       3 allocs/op
+BenchmarkOdometer_Decrement-12        	56414820	        21.25 ns/op	       0 B/op	       0 allocs/op
+BenchmarkOdometer_Decrement_Big-12    	44742920	        27.37 ns/op	       0 B/op	       0 allocs/op
+BenchmarkOdometer_DecrementN-12       	 6536234	       177.3 ns/op	      16 B/op	       2 allocs/op
+BenchmarkOdometer_GotoLocation-12     	 5184144	       220.7 ns/op	      56 B/op	       4 allocs/op
+BenchmarkOdometer_Increment-12        	61866901	        19.37 ns/op	       0 B/op	       0 allocs/op
+BenchmarkOdometer_Increment_Big-12    	67560506	        17.68 ns/op	       0 B/op	       0 allocs/op
+BenchmarkOdometer_IncrementN-12       	 7371675	       172.7 ns/op	      16 B/op	       2 allocs/op
+BenchmarkOdometer_String-12           	14852208	        75.40 ns/op	      16 B/op	       1 allocs/op
 PASS
-ok  	github.com/jedib0t/go-passwords/password/sequencer	6.888s
+ok  	github.com/jedib0t/go-passwords/odometer	10.282s
 ```
