@@ -10,19 +10,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func BenchmarkGenerator_Generate(b *testing.B) {
-	g, err := NewGenerator(
-		WithCharset(charset.AlphaNumeric.WithoutAmbiguity().WithoutDuplicates()),
-		WithLength(12),
-	)
-	assert.Nil(b, err)
-	assert.NotEmpty(b, g.Generate())
-
-	for idx := 0; idx < b.N; idx++ {
-		_ = g.Generate()
-	}
-}
-
 func TestGenerator_Generate(t *testing.T) {
 	g, err := NewGenerator(
 		WithCharset(charset.AlphaNumeric.WithoutAmbiguity().WithoutDuplicates()),

@@ -1,36 +1,30 @@
 package main
 
 import (
-	"context"
 	"fmt"
-	"time"
 
 	"github.com/jedib0t/go-passwords/charset"
+	"github.com/jedib0t/go-passwords/odometer"
 	"github.com/jedib0t/go-passwords/passphrase"
 	"github.com/jedib0t/go-passwords/passphrase/dictionaries"
 	"github.com/jedib0t/go-passwords/password"
-	"github.com/jedib0t/go-passwords/password/sequencer"
 )
 
 func main() {
 	fmt.Println("Passphrases:")
-	passphraseGenerator()
+	demoPassphraseGenerator()
 	fmt.Println()
 
 	fmt.Println("Passwords:")
-	passwordGenerator()
+	demoPasswordGenerator()
 	fmt.Println()
 
-	fmt.Println("Passwords Sequenced:")
-	passwordSequencer()
-	fmt.Println()
-
-	fmt.Println("Passwords Sequenced & Streamed:")
-	passwordSequencerStreaming()
+	fmt.Println("Odometer:")
+	demoOdometer()
 	fmt.Println()
 }
 
-func passphraseGenerator() {
+func demoPassphraseGenerator() {
 	g, err := passphrase.NewGenerator(
 		passphrase.WithCapitalizedWords(true),
 		passphrase.WithDictionary(dictionaries.English()),
@@ -47,7 +41,7 @@ func passphraseGenerator() {
 	}
 }
 
-func passwordGenerator() {
+func demoPasswordGenerator() {
 	g, err := password.NewGenerator(
 		password.WithCharset(charset.AllChars.WithoutAmbiguity().WithoutDuplicates()),
 		password.WithLength(12),
@@ -63,55 +57,15 @@ func passwordGenerator() {
 	}
 }
 
-func passwordSequencer() {
-	s, err := sequencer.New(
-		sequencer.WithCharset(charset.AllChars.WithoutAmbiguity()),
-		sequencer.WithLength(8),
-	)
-	if err != nil {
-		panic(err.Error())
-	}
-	for idx := 1; idx <= 10; idx++ {
-		fmt.Printf("Password #%3d: %#v\n", idx, s.Get())
+func demoOdometer() {
+	o := odometer.New(charset.AlphabetsUpper, 8)
 
-		if !s.HasNext() {
+	for idx := 1; idx <= 10; idx++ {
+		fmt.Printf("Password #%3d: %#v\n", idx, o.String())
+
+		if o.AtEnd() {
 			break
 		}
-		s.Next()
-	}
-}
-
-func passwordSequencerStreaming() {
-	s, err := sequencer.New(
-		sequencer.WithCharset(charset.Charset("AB")),
-		sequencer.WithLength(4),
-	)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-	defer cancel()
-
-	chPasswords := make(chan string, 1)
-	go func() {
-		err := s.Stream(ctx, chPasswords)
-		if err != nil {
-			panic(err.Error())
-		}
-	}()
-
-	idx := 0
-	for {
-		select {
-		case <-ctx.Done():
-			panic("timed out")
-		case pw, ok := <-chPasswords:
-			if !ok {
-				return
-			}
-			idx++
-			fmt.Printf("Password #%3d: %#v\n", idx, pw)
-		}
+		o.Increment()
 	}
 }
