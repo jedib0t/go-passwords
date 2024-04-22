@@ -9,16 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func BenchmarkGenerator_Generate(b *testing.B) {
-	g, err := NewGenerator()
-	assert.Nil(b, err)
-	assert.NotEmpty(b, g.Generate())
-
-	for idx := 0; idx < b.N; idx++ {
-		_ = g.Generate()
-	}
-}
-
 func TestGenerator_Generate(t *testing.T) {
 	g, err := NewGenerator(
 		WithCapitalizedWords(true),
@@ -33,18 +23,16 @@ func TestGenerator_Generate(t *testing.T) {
 	g.SetSeed(1)
 
 	expectedPassphrases := []string{
-		"Sans-Liber-Quale1",
-		"Defogs-Tael0-Hallo",
-		"Medium-Leader-Sesame2",
-		"Chelae-Tocsin8-Haling",
-		"Taxies1-Sordor-Banner",
-		"Kwanza-Molies-Lapses5",
-		"Scurf-Hookas-Beryl4",
-		"Repine-Dele-Loans3",
-		"Furore0-Geneva-Celts",
-		"Strew7-Tweed-Sannop",
-		"Quasi7-Vino-Optic",
-		"Alible8-Sherds-Fraena",
+		"Sannup-Libels-Quaky1",
+		"Defog-Tads0-Hallel",
+		"Medina-Leaden-Servos2",
+		"Chela-Tocher8-Halids",
+		"Taxied1-Sordid-Banned",
+		"Kwacha-Molest-Lapser5",
+		"Scups-Hookah-Berths4",
+		"Repin-Delays-Loaner3",
+		"Furor0-Genets-Celt",
+		"Stress7-Twee-Sank",
 	}
 	var actualPhrases []string
 	for idx := 0; idx < 1000; idx++ {

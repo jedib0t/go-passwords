@@ -80,6 +80,8 @@ func (g *generator) sanitize() (Generator, error) {
 	slices.DeleteFunc(g.dictionary, func(word string) bool {
 		return len(word) < g.wordLenMin || len(word) > g.wordLenMax
 	})
+	slices.Sort(g.dictionary)
+	slices.Compact(g.dictionary)
 	if len(g.dictionary) < MinWordsInDictionary {
 		return nil, ErrDictionaryTooSmall
 	}
