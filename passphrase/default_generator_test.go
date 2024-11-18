@@ -10,5 +10,5 @@ func TestGenerate(t *testing.T) {
 	assert.NotEmpty(t, Generate())
 
 	SetSeed(1)
-	assert.Equal(t, "Holism-Sharing6-Elates", Generate())
+	assert.Equal(t, "Duos-Limba6-Coddle", Generate())
 }

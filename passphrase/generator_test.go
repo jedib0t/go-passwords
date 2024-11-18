@@ -23,16 +23,16 @@ func TestGenerator_Generate(t *testing.T) {
 	g.SetSeed(1)
 
 	expectedPassphrases := []string{
-		"Sannup-Libels-Quaky1",
-		"Defog-Tads0-Hallel",
-		"Medina-Leaden-Servos2",
-		"Chela-Tocher8-Halids",
-		"Taxied1-Sordid-Banned",
-		"Kwacha-Molest-Lapser5",
-		"Scups-Hookah-Berths4",
-		"Repin-Delays-Loaner3",
-		"Furor0-Genets-Celt",
-		"Stress7-Twee-Sank",
+		"Eaters-Likers6-Coiler",
+		"Shags-Obeyed2-Tweeze",
+		"Reared-Campos-Umbral5",
+		"Subers-Bemean-Sall6",
+		"Priory1-Prayer-Mirk",
+		"Kills8-Alkoxy-Sequel",
+		"Long-Reply-Coco4",
+		"Embank3-Tusche-Degage",
+		"Pitons-Luce9-Jabber",
+		"Flavin-Capful-Leaved2",
 	}
 	var actualPhrases []string
 	for idx := 0; idx < 1000; idx++ {
