@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/jedib0t/go-passwords/charset"
-	"github.com/jedib0t/go-passwords/odometer"
+	"github.com/jedib0t/go-passwords/enumerator"
 	"github.com/jedib0t/go-passwords/passphrase"
 	"github.com/jedib0t/go-passwords/passphrase/dictionaries"
 	"github.com/jedib0t/go-passwords/password"
@@ -19,8 +19,8 @@ func main() {
 	demoPasswordGenerator()
 	fmt.Println()
 
-	fmt.Println("Odometer:")
-	demoOdometer()
+	fmt.Println("Enumerator:")
+	demoEnumerator()
 	fmt.Println()
 }
 
@@ -57,8 +57,8 @@ func demoPasswordGenerator() {
 	}
 }
 
-func demoOdometer() {
-	o := odometer.New(charset.AlphabetsUpper, 8)
+func demoEnumerator() {
+	o := enumerator.New(charset.AlphabetsUpper, 8)
 
 	for idx := 1; idx <= 10; idx++ {
 		fmt.Printf("Password #%3d: %#v\n", idx, o.String())

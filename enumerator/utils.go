@@ -1,4 +1,4 @@
-package odometer
+package enumerator
 
 import (
 	"math/big"

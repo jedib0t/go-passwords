@@ -5,22 +5,19 @@
 [![Coverage Status](https://coveralls.io/repos/github/jedib0t/go-passwords/badge.svg?branch=main)](https://coveralls.io/github/jedib0t/go-passwords?branch=main)
 [![Go Report Card](https://goreportcard.com/badge/github.com/jedib0t/go-passwords)](https://goreportcard.com/report/github.com/jedib0t/go-passwords)
 
-Passphrase & Password generation library for GoLang.
+A high-performance Go library for generating secure passphrases and passwords with extensive customization options.
 
 ## Passphrases
 
-Passphrases are made up of 2 or more words connected by a separator and may have
-capitalized words, and numbers. These are easier for humans to remember compared
-to passwords.
+Passphrases combine 2+ words with separators, optionally capitalized and with numbers. They're easier to remember than passwords while maintaining security.
 
-The `passphrase` package helps generate these and supports the following rules
-that be used during generation:
-* Capitalize words used in the passphrase (foo -> Foo)
-* Use a custom dictionary of words instead of built-in English dictionary
-* Use X number of Words
-* Insert a random number behind one of the words
-* Use a custom separator
-* Use words with a specific length-range
+**Features:**
+- Capitalize words (e.g., `foo` → `Foo`)
+- Custom dictionaries or built-in English dictionary
+- Configurable word count (2-32 words)
+- Optional random number insertion
+- Custom separators
+- Word length filtering
 
 ### Example
 ```golang
@@ -35,8 +32,8 @@ that be used during generation:
 	if err != nil {
 		panic(err.Error())
 	}
-	for idx := 1; idx <= 10; idx++ {
-		fmt.Printf("Passphrase #%3d: %#v\n", idx, g.Generate())
+	for i := 1; i <= 10; i++ {
+		fmt.Printf("Passphrase #%3d: %#v\n", i, g.Generate())
 	}
 ```
 <details>
@@ -57,15 +54,14 @@ Passphrase # 10: "Mirks6-Woofer-Lase"
 
 ## Passwords
 
-Passwords are a random amalgamation of characters.
+Generate cryptographically secure random passwords with fine-grained character requirements.
 
-The `password` package helps generate these and supports the following rules
-that be used during generation:
-* Use a specific character-set
-* Restrict the length of the password
-* Use *at least* X lower-case characters
-* Use *at least* X upper-case characters
-* Use *at least* X and *at most* Y symbols
+**Features:**
+- Custom character sets with ambiguity/duplicate filtering
+- Configurable length
+- Minimum lower-case character requirements
+- Minimum upper-case character requirements
+- Symbol count range (min/max)
 
 ### Example
 ```golang
@@ -79,8 +75,8 @@ that be used during generation:
 	if err != nil {
 		panic(err.Error())
 	}
-	for idx := 1; idx <= 10; idx++ {
-		fmt.Printf("Password #%3d: %#v\n", idx, g.Generate())
+	for i := 1; i <= 10; i++ {
+		fmt.Printf("Password #%3d: %#v\n", i, g.Generate())
 	}
 ```
 <details>
@@ -99,26 +95,23 @@ Password # 10: "kmQVb&fPqexj"
 </pre>
 </details>
 
-## Odometer
+## Enumerator
 
-Odometer helps generate all possible string combinations of characters given a
-list of characters and the expected length of the string.
+Systematically enumerate all possible string combinations from a character set and length. Useful for brute-force testing, password cracking research, or exhaustive search scenarios.
 
-The `odometer` package provides optimal interfaces to move through the list:
-* Decrement()
-* DecrementN(n)
-* GoTo(n)
-* Increment()
-* IncrementN(n)
-* etc.
+**Features:**
+- Efficient iteration through all combinations
+- Jump to specific positions
+- Increment/decrement by N steps
+- Optional rollover mode
+- Zero-allocation operations (after initial setup)
 
 ### Example
 ```golang
-	o := odometer.New(charset.AlphabetsUpper, 8)
+	o := enumerator.New(charset.AlphabetsUpper, 8)
 
-	for idx := 1; idx <= 10; idx++ {
-		fmt.Printf("Password #%3d: %#v\n", idx, o.String())
-
+	for i := 1; i <= 10; i++ {
+		fmt.Printf("Combination #%3d: %#v\n", i, o.String())
 		if o.AtEnd() {
 			break
 		}
@@ -128,49 +121,30 @@ The `odometer` package provides optimal interfaces to move through the list:
 <details>
 <summary>Output...</summary>
 <pre>
-Password #  1: "AAAAAAAA"
-Password #  2: "AAAAAAAB"
-Password #  3: "AAAAAAAC"
-Password #  4: "AAAAAAAD"
-Password #  5: "AAAAAAAE"
-Password #  6: "AAAAAAAF"
-Password #  7: "AAAAAAAG"
-Password #  8: "AAAAAAAH"
-Password #  9: "AAAAAAAI"
-Password # 10: "AAAAAAAJ"
+Combination #  1: "AAAAAAAA"
+Combination #  2: "AAAAAAAB"
+Combination #  3: "AAAAAAAC"
+Combination #  4: "AAAAAAAD"
+Combination #  5: "AAAAAAAE"
+Combination #  6: "AAAAAAAF"
+Combination #  7: "AAAAAAAG"
+Combination #  8: "AAAAAAAH"
+Combination #  9: "AAAAAAAI"
+Combination # 10: "AAAAAAAJ"
 </pre>
 </details>
 
-## Benchmarks
-```
-goos: linux
-goarch: amd64
-pkg: github.com/jedib0t/go-passwords/passphrase
-cpu: AMD Ryzen 9 5900X 12-Core Processor            
-BenchmarkGenerator_Generate-12    	 3979081	       294.8 ns/op	     144 B/op	       5 allocs/op
-PASS
-ok  	github.com/jedib0t/go-passwords/passphrase	1.503s
+## Performance
 
-goos: linux
-goarch: amd64
-pkg: github.com/jedib0t/go-passwords/password
-cpu: AMD Ryzen 9 5900X 12-Core Processor            
-BenchmarkGenerator_Generate-12    	 5977402	       199.4 ns/op	      40 B/op	       2 allocs/op
-PASS
-ok  	github.com/jedib0t/go-passwords/password	1.414s
+Benchmarked on AMD Ryzen 9 9950X3D:
 
-goos: linux
-goarch: amd64
-pkg: github.com/jedib0t/go-passwords/odometer
-cpu: AMD Ryzen 9 5900X 12-Core Processor            
-BenchmarkOdometer_Decrement-12        	56414820	        21.25 ns/op	       0 B/op	       0 allocs/op
-BenchmarkOdometer_Decrement_Big-12    	44742920	        27.37 ns/op	       0 B/op	       0 allocs/op
-BenchmarkOdometer_DecrementN-12       	 6536234	       177.3 ns/op	      16 B/op	       2 allocs/op
-BenchmarkOdometer_GotoLocation-12     	 5184144	       220.7 ns/op	      56 B/op	       4 allocs/op
-BenchmarkOdometer_Increment-12        	61866901	        19.37 ns/op	       0 B/op	       0 allocs/op
-BenchmarkOdometer_Increment_Big-12    	67560506	        17.68 ns/op	       0 B/op	       0 allocs/op
-BenchmarkOdometer_IncrementN-12       	 7371675	       172.7 ns/op	      16 B/op	       2 allocs/op
-BenchmarkOdometer_String-12           	14852208	        75.40 ns/op	      16 B/op	       1 allocs/op
-PASS
-ok  	github.com/jedib0t/go-passwords/odometer	10.282s
-```
+| Operation | Time | Allocations |
+|-----------|------|-------------|
+| **Enumerator** | | |
+| Increment/Decrement | ~17 ns/op | 0 B/op, 0 allocs/op |
+| IncrementN/DecrementN | ~110 ns/op | 0 B/op, 0 allocs/op |
+| String | ~16 ns/op | 0 B/op, 0 allocs/op |
+| **Password Generation** | ~117 ns/op | 40 B/op, 2 allocs/op |
+| **Passphrase Generation** | ~160 ns/op | 144 B/op, 5 allocs/op |
+
+Run benchmarks: `go test -bench=. -benchmem ./enumerator ./passphrase ./password`
