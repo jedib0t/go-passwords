@@ -143,34 +143,33 @@ Password # 10: "AAAAAAAJ"
 
 ## Benchmarks
 ```
-goos: linux
-goarch: amd64
-pkg: github.com/jedib0t/go-passwords/passphrase
-cpu: AMD Ryzen 9 5900X 12-Core Processor            
-BenchmarkGenerator_Generate-12    	 3979081	       294.8 ns/op	     144 B/op	       5 allocs/op
-PASS
-ok  	github.com/jedib0t/go-passwords/passphrase	1.503s
-
-goos: linux
-goarch: amd64
-pkg: github.com/jedib0t/go-passwords/password
-cpu: AMD Ryzen 9 5900X 12-Core Processor            
-BenchmarkGenerator_Generate-12    	 5977402	       199.4 ns/op	      40 B/op	       2 allocs/op
-PASS
-ok  	github.com/jedib0t/go-passwords/password	1.414s
-
+go test -bench=. -benchmem ./enumerator ./passphrase ./password
 goos: linux
 goarch: amd64
 pkg: github.com/jedib0t/go-passwords/enumerator
-cpu: AMD Ryzen 9 5900X 12-Core Processor            
-BenchmarkEnumerator_Decrement-12        	56414820	        21.25 ns/op	       0 B/op	       0 allocs/op
-BenchmarkEnumerator_Decrement_Big-12    	44742920	        27.37 ns/op	       0 B/op	       0 allocs/op
-BenchmarkEnumerator_DecrementN-12       	 6536234	       177.3 ns/op	      16 B/op	       2 allocs/op
-BenchmarkEnumerator_GoTo-12     	 5184144	       220.7 ns/op	      56 B/op	       4 allocs/op
-BenchmarkEnumerator_Increment-12        	61866901	        19.37 ns/op	       0 B/op	       0 allocs/op
-BenchmarkEnumerator_Increment_Big-12    	67560506	        17.68 ns/op	       0 B/op	       0 allocs/op
-BenchmarkEnumerator_IncrementN-12       	 7371675	       172.7 ns/op	      16 B/op	       2 allocs/op
-BenchmarkEnumerator_String-12           	14852208	        75.40 ns/op	      16 B/op	       1 allocs/op
+cpu: AMD Ryzen 9 9950X3D 16-Core Processor          
+BenchmarkEnumerator_Decrement-12                68338802                17.73 ns/op            0 B/op          0 allocs/op
+BenchmarkEnumerator_Decrement_Big-12            67899237                17.63 ns/op            0 B/op          0 allocs/op
+BenchmarkEnumerator_DecrementN-12               10151359               114.5 ns/op             0 B/op          0 allocs/op
+BenchmarkEnumerator_GoTo-12                      8441791               138.2 ns/op            40 B/op          2 allocs/op
+BenchmarkEnumerator_Increment-12                69405856                17.29 ns/op            0 B/op          0 allocs/op
+BenchmarkEnumerator_Increment_Big-12            70501692                17.36 ns/op            0 B/op          0 allocs/op
+BenchmarkEnumerator_IncrementN-12               11806892               109.6 ns/op             0 B/op          0 allocs/op
+BenchmarkEnumerator_String-12                   74139985                16.08 ns/op            0 B/op          0 allocs/op
 PASS
-ok  	github.com/jedib0t/go-passwords/enumerator	10.282s
+ok      github.com/jedib0t/go-passwords/enumerator      10.132s
+goos: linux
+goarch: amd64
+pkg: github.com/jedib0t/go-passwords/passphrase
+cpu: AMD Ryzen 9 9950X3D 16-Core Processor          
+BenchmarkGenerator_Generate-12           6747350               159.6 ns/op           144 B/op          5 allocs/op
+PASS
+ok      github.com/jedib0t/go-passwords/passphrase      1.298s
+goos: linux
+goarch: amd64
+pkg: github.com/jedib0t/go-passwords/password
+cpu: AMD Ryzen 9 9950X3D 16-Core Processor          
+BenchmarkGenerator_Generate-12           9879747               116.9 ns/op            40 B/op          2 allocs/op
+PASS
+ok      github.com/jedib0t/go-passwords/password        1.284s
 ```
