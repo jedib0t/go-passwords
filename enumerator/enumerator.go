@@ -2,6 +2,7 @@ package enumerator
 
 import (
 	"math/big"
+	"strings"
 	"sync"
 
 	"github.com/jedib0t/go-passwords/charset"
@@ -50,6 +51,19 @@ type enumerator struct {
 	rollover       bool
 	value          []int
 	valueInCharset []rune
+
+	// Optimization: lazy location computation
+	locationDirty bool
+
+	// Optimization: reusable big.Int objects for computeValue and ensureLocation
+	dividend   *big.Int
+	remainder  *big.Int
+	multiplier *big.Int
+	val        *big.Int
+
+	// Optimization: cached string result
+	cachedString string
+	stringDirty  bool
 }
 
 // New returns a new Enumerator with "length" gears each containing the given
@@ -67,6 +81,12 @@ func New(cs charset.Charset, length int, opts ...Option) Enumerator {
 		locationMax:    new(big.Int).Set(maxValues),
 		value:          make([]int, length),
 		valueInCharset: make([]rune, length),
+		dividend:       new(big.Int),
+		remainder:      new(big.Int),
+		multiplier:     new(big.Int),
+		val:            new(big.Int),
+		locationDirty:  false,
+		stringDirty:    true, // Need to compute initial string
 	}
 	for _, opt := range opts {
 		opt(o)
@@ -78,6 +98,7 @@ func (o *enumerator) AtEnd() bool {
 	o.mutex.RLock()
 	defer o.mutex.RUnlock()
 
+	o.ensureLocation()
 	return o.location.Cmp(o.locationMax) >= 0
 }
 
@@ -85,8 +106,15 @@ func (o *enumerator) Decrement() bool {
 	o.mutex.Lock()
 	defer o.mutex.Unlock()
 
-	// set the location
-	if o.location.Cmp(biOne) == 0 { // at first
+	// Check if at first by checking if all values are 0
+	isFirst := true
+	for idx := range o.value {
+		if o.value[idx] != 0 {
+			isFirst = false
+			break
+		}
+	}
+	if isFirst {
 		if o.rollover {
 			o.last()
 			return true
@@ -94,10 +122,11 @@ func (o *enumerator) Decrement() bool {
 		return false
 	}
 
-	// decrement value
-	o.location.Sub(o.location, biOne)
+	// Decrement value array directly (no location update needed)
 	for idx := o.length - 1; idx >= 0; idx-- {
 		if o.decrementAtIndex(idx) {
+			o.locationDirty = true
+			o.stringDirty = true
 			return true
 		}
 	}
@@ -108,6 +137,7 @@ func (o *enumerator) DecrementN(n *big.Int) bool {
 	o.mutex.Lock()
 	defer o.mutex.Unlock()
 
+	o.ensureLocation()
 	o.location.Sub(o.location, n)
 	if o.location.Cmp(biOne) < 0 { // less than min
 		if !o.rollover {
@@ -120,6 +150,7 @@ func (o *enumerator) DecrementN(n *big.Int) bool {
 		}
 	}
 	o.computeValue()
+	o.locationDirty = false // location is now in sync with value
 	return true
 }
 
@@ -134,6 +165,7 @@ func (o *enumerator) Location() *big.Int {
 	o.mutex.RLock()
 	defer o.mutex.RUnlock()
 
+	o.ensureLocation()
 	return new(big.Int).Set(o.location)
 }
 
@@ -141,8 +173,16 @@ func (o *enumerator) Increment() bool {
 	o.mutex.Lock()
 	defer o.mutex.Unlock()
 
-	// set the location
-	if o.location.Cmp(o.locationMax) == 0 { // at max
+	// Check if at max by checking if all values are at max
+	isMax := true
+	maxVal := o.base - 1
+	for idx := range o.value {
+		if o.value[idx] != maxVal {
+			isMax = false
+			break
+		}
+	}
+	if isMax {
 		if o.rollover {
 			o.first()
 			return true
@@ -150,10 +190,11 @@ func (o *enumerator) Increment() bool {
 		return false
 	}
 
-	// increment value
-	o.location.Add(o.location, biOne)
+	// Increment value array directly (no location update needed)
 	for idx := o.length - 1; idx >= 0; idx-- {
 		if o.incrementAtIndex(idx) {
+			o.locationDirty = true
+			o.stringDirty = true
 			return true
 		}
 	}
@@ -164,6 +205,7 @@ func (o *enumerator) IncrementN(n *big.Int) bool {
 	o.mutex.Lock()
 	defer o.mutex.Unlock()
 
+	o.ensureLocation()
 	o.location.Add(o.location, n)
 	if o.location.Cmp(o.locationMax) > 0 { // more than max
 		if !o.rollover {
@@ -176,6 +218,7 @@ func (o *enumerator) IncrementN(n *big.Int) bool {
 		}
 	}
 	o.computeValue()
+	o.locationDirty = false // location is now in sync with value
 	return true
 }
 
@@ -190,11 +233,13 @@ func (o *enumerator) GoTo(n *big.Int) error {
 	o.mutex.Lock()
 	defer o.mutex.Unlock()
 
+	o.ensureLocation()
 	if n.Cmp(biOne) < 0 || n.Cmp(o.locationMax) > 0 {
 		return ErrInvalidLocation
 	}
 	o.location.Set(n)
 	o.computeValue()
+	o.locationDirty = false // location is now in sync with value
 	return nil
 }
 
@@ -202,10 +247,16 @@ func (o *enumerator) String() string {
 	o.mutex.Lock()
 	defer o.mutex.Unlock()
 
-	for idx := range o.valueInCharset {
-		o.valueInCharset[idx] = o.charset[o.value[idx]]
+	if o.stringDirty {
+		var b strings.Builder
+		b.Grow(o.length)
+		for idx := range o.value {
+			b.WriteRune(o.charset[o.value[idx]])
+		}
+		o.cachedString = b.String()
+		o.stringDirty = false
 	}
-	return string(o.valueInCharset)
+	return o.cachedString
 }
 
 func (o *enumerator) computeValue() {
@@ -213,19 +264,19 @@ func (o *enumerator) computeValue() {
 	// given base using continuous division and use all the remainders as the
 	// values
 
-	// prep the dividend, remainder and modulus
-	dividend, remainder := new(big.Int).Sub(o.location, biOne), new(big.Int)
-	// append values in reverse (from right to left)
+	// Reuse pre-allocated big.Int objects instead of creating new ones
+	o.dividend.Sub(o.location, biOne)
 	valIdx := o.length - 1
 	// append every remainder until dividend becomes zero
-	for ; dividend.Cmp(biZero) != 0; valIdx-- {
-		dividend, remainder = dividend.QuoRem(dividend, o.baseBigInt, remainder)
-		o.value[valIdx] = int(remainder.Int64())
+	for ; o.dividend.Cmp(biZero) != 0; valIdx-- {
+		o.dividend.QuoRem(o.dividend, o.baseBigInt, o.remainder)
+		o.value[valIdx] = int(o.remainder.Int64())
 	}
 	// left-pad the remaining characters with 0 (==> 0th char in charset)
 	for ; valIdx >= 0; valIdx-- {
 		o.value[valIdx] = 0
 	}
+	o.stringDirty = true
 }
 
 func (o *enumerator) decrementAtIndex(idx int) bool {
@@ -235,8 +286,9 @@ func (o *enumerator) decrementAtIndex(idx int) bool {
 	}
 	if o.value[idx] == 0 && idx > 0 {
 		o.value[idx] = o.base - 1
-		o.decrementAtIndex(idx - 1)
-		return true
+		if o.decrementAtIndex(idx - 1) {
+			return true
+		}
 	}
 	return false
 }
@@ -246,6 +298,8 @@ func (o *enumerator) first() {
 	for idx := range o.value {
 		o.value[idx] = 0
 	}
+	o.locationDirty = false
+	o.stringDirty = true
 }
 
 func (o *enumerator) incrementAtIndex(idx int) bool {
@@ -255,8 +309,9 @@ func (o *enumerator) incrementAtIndex(idx int) bool {
 	}
 	if o.value[idx] == o.base-1 && idx > 0 {
 		o.value[idx] = 0
-		o.incrementAtIndex(idx - 1)
-		return true
+		if o.incrementAtIndex(idx - 1) {
+			return true
+		}
 	}
 	return false
 }
@@ -266,4 +321,27 @@ func (o *enumerator) last() {
 	for idx := range o.value {
 		o.value[idx] = o.base - 1
 	}
+	o.locationDirty = false
+	o.stringDirty = true
+}
+
+// ensureLocation computes location from value array if it's dirty
+func (o *enumerator) ensureLocation() {
+	if !o.locationDirty {
+		return
+	}
+
+	// Compute location from value array
+	// location = 1 + sum(value[i] * base^(length-1-i))
+	o.location.Set(biOne)
+	o.multiplier.SetInt64(1)
+	for idx := o.length - 1; idx >= 0; idx-- {
+		if o.value[idx] > 0 {
+			o.val.SetInt64(int64(o.value[idx]))
+			o.val.Mul(o.val, o.multiplier)
+			o.location.Add(o.location, o.val)
+		}
+		o.multiplier.Mul(o.multiplier, o.baseBigInt)
+	}
+	o.locationDirty = false
 }
