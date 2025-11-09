@@ -5,22 +5,19 @@
 [![Coverage Status](https://coveralls.io/repos/github/jedib0t/go-passwords/badge.svg?branch=main)](https://coveralls.io/github/jedib0t/go-passwords?branch=main)
 [![Go Report Card](https://goreportcard.com/badge/github.com/jedib0t/go-passwords)](https://goreportcard.com/report/github.com/jedib0t/go-passwords)
 
-Passphrase & Password generation library for GoLang.
+A high-performance Go library for generating secure passphrases and passwords with extensive customization options.
 
 ## Passphrases
 
-Passphrases are made up of 2 or more words connected by a separator and may have
-capitalized words, and numbers. These are easier for humans to remember compared
-to passwords.
+Passphrases combine 2+ words with separators, optionally capitalized and with numbers. They're easier to remember than passwords while maintaining security.
 
-The `passphrase` package helps generate these and supports the following rules
-that be used during generation:
-* Capitalize words used in the passphrase (foo -> Foo)
-* Use a custom dictionary of words instead of built-in English dictionary
-* Use X number of Words
-* Insert a random number behind one of the words
-* Use a custom separator
-* Use words with a specific length-range
+**Features:**
+- Capitalize words (e.g., `foo` → `Foo`)
+- Custom dictionaries or built-in English dictionary
+- Configurable word count (2-32 words)
+- Optional random number insertion
+- Custom separators
+- Word length filtering
 
 ### Example
 ```golang
@@ -35,8 +32,8 @@ that be used during generation:
 	if err != nil {
 		panic(err.Error())
 	}
-	for idx := 1; idx <= 10; idx++ {
-		fmt.Printf("Passphrase #%3d: %#v\n", idx, g.Generate())
+	for i := 1; i <= 10; i++ {
+		fmt.Printf("Passphrase #%3d: %#v\n", i, g.Generate())
 	}
 ```
 <details>
@@ -57,15 +54,14 @@ Passphrase # 10: "Mirks6-Woofer-Lase"
 
 ## Passwords
 
-Passwords are a random amalgamation of characters.
+Generate cryptographically secure random passwords with fine-grained character requirements.
 
-The `password` package helps generate these and supports the following rules
-that be used during generation:
-* Use a specific character-set
-* Restrict the length of the password
-* Use *at least* X lower-case characters
-* Use *at least* X upper-case characters
-* Use *at least* X and *at most* Y symbols
+**Features:**
+- Custom character sets with ambiguity/duplicate filtering
+- Configurable length
+- Minimum lower-case character requirements
+- Minimum upper-case character requirements
+- Symbol count range (min/max)
 
 ### Example
 ```golang
@@ -79,8 +75,8 @@ that be used during generation:
 	if err != nil {
 		panic(err.Error())
 	}
-	for idx := 1; idx <= 10; idx++ {
-		fmt.Printf("Password #%3d: %#v\n", idx, g.Generate())
+	for i := 1; i <= 10; i++ {
+		fmt.Printf("Password #%3d: %#v\n", i, g.Generate())
 	}
 ```
 <details>
@@ -101,24 +97,21 @@ Password # 10: "kmQVb&fPqexj"
 
 ## Enumerator
 
-Enumerator helps generate all possible string combinations of characters given a
-list of characters and the expected length of the string.
+Systematically enumerate all possible string combinations from a character set and length. Useful for brute-force testing, password cracking research, or exhaustive search scenarios.
 
-The `enumerator` package provides optimal interfaces to move through the list:
-* Decrement()
-* DecrementN(n)
-* GoTo(n)
-* Increment()
-* IncrementN(n)
-* etc.
+**Features:**
+- Efficient iteration through all combinations
+- Jump to specific positions
+- Increment/decrement by N steps
+- Optional rollover mode
+- Zero-allocation operations (after initial setup)
 
 ### Example
 ```golang
 	o := enumerator.New(charset.AlphabetsUpper, 8)
 
-	for idx := 1; idx <= 10; idx++ {
-		fmt.Printf("Password #%3d: %#v\n", idx, o.String())
-
+	for i := 1; i <= 10; i++ {
+		fmt.Printf("Combination #%3d: %#v\n", i, o.String())
 		if o.AtEnd() {
 			break
 		}
@@ -128,48 +121,30 @@ The `enumerator` package provides optimal interfaces to move through the list:
 <details>
 <summary>Output...</summary>
 <pre>
-Password #  1: "AAAAAAAA"
-Password #  2: "AAAAAAAB"
-Password #  3: "AAAAAAAC"
-Password #  4: "AAAAAAAD"
-Password #  5: "AAAAAAAE"
-Password #  6: "AAAAAAAF"
-Password #  7: "AAAAAAAG"
-Password #  8: "AAAAAAAH"
-Password #  9: "AAAAAAAI"
-Password # 10: "AAAAAAAJ"
+Combination #  1: "AAAAAAAA"
+Combination #  2: "AAAAAAAB"
+Combination #  3: "AAAAAAAC"
+Combination #  4: "AAAAAAAD"
+Combination #  5: "AAAAAAAE"
+Combination #  6: "AAAAAAAF"
+Combination #  7: "AAAAAAAG"
+Combination #  8: "AAAAAAAH"
+Combination #  9: "AAAAAAAI"
+Combination # 10: "AAAAAAAJ"
 </pre>
 </details>
 
-## Benchmarks
-```
-go test -bench=. -benchmem ./enumerator ./passphrase ./password
-goos: linux
-goarch: amd64
-pkg: github.com/jedib0t/go-passwords/enumerator
-cpu: AMD Ryzen 9 9950X3D 16-Core Processor          
-BenchmarkEnumerator_Decrement-12                68338802                17.73 ns/op            0 B/op          0 allocs/op
-BenchmarkEnumerator_Decrement_Big-12            67899237                17.63 ns/op            0 B/op          0 allocs/op
-BenchmarkEnumerator_DecrementN-12               10151359               114.5 ns/op             0 B/op          0 allocs/op
-BenchmarkEnumerator_GoTo-12                      8441791               138.2 ns/op            40 B/op          2 allocs/op
-BenchmarkEnumerator_Increment-12                69405856                17.29 ns/op            0 B/op          0 allocs/op
-BenchmarkEnumerator_Increment_Big-12            70501692                17.36 ns/op            0 B/op          0 allocs/op
-BenchmarkEnumerator_IncrementN-12               11806892               109.6 ns/op             0 B/op          0 allocs/op
-BenchmarkEnumerator_String-12                   74139985                16.08 ns/op            0 B/op          0 allocs/op
-PASS
-ok      github.com/jedib0t/go-passwords/enumerator      10.132s
-goos: linux
-goarch: amd64
-pkg: github.com/jedib0t/go-passwords/passphrase
-cpu: AMD Ryzen 9 9950X3D 16-Core Processor          
-BenchmarkGenerator_Generate-12           6747350               159.6 ns/op           144 B/op          5 allocs/op
-PASS
-ok      github.com/jedib0t/go-passwords/passphrase      1.298s
-goos: linux
-goarch: amd64
-pkg: github.com/jedib0t/go-passwords/password
-cpu: AMD Ryzen 9 9950X3D 16-Core Processor          
-BenchmarkGenerator_Generate-12           9879747               116.9 ns/op            40 B/op          2 allocs/op
-PASS
-ok      github.com/jedib0t/go-passwords/password        1.284s
-```
+## Performance
+
+Benchmarked on AMD Ryzen 9 9950X3D:
+
+| Operation | Time | Allocations |
+|-----------|------|-------------|
+| **Enumerator** | | |
+| Increment/Decrement | ~17 ns/op | 0 B/op, 0 allocs/op |
+| IncrementN/DecrementN | ~110 ns/op | 0 B/op, 0 allocs/op |
+| String | ~16 ns/op | 0 B/op, 0 allocs/op |
+| **Password Generation** | ~117 ns/op | 40 B/op, 2 allocs/op |
+| **Passphrase Generation** | ~160 ns/op | 144 B/op, 5 allocs/op |
+
+Run benchmarks: `go test -bench=. -benchmem ./enumerator ./passphrase ./password`
