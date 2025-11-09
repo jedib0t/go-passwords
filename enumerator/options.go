@@ -1,6 +1,6 @@
-package odometer
+package enumerator
 
-type Option func(o *odometer)
+type Option func(o *enumerator)
 
 var (
 	defaultOptions = []Option{
@@ -9,7 +9,7 @@ var (
 )
 
 func WithRolloverEnabled(r bool) Option {
-	return func(o *odometer) {
+	return func(o *enumerator) {
 		o.rollover = r
 	}
 }

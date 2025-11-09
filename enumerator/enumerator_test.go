@@ -1,4 +1,4 @@
-package odometer
+package enumerator
 
 import (
 	"errors"
@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestOdometer(t *testing.T) {
+func TestEnumerator(t *testing.T) {
 	t.Run("default", func(t *testing.T) {
 		o := New(charset.Numbers, 2)
 		assert.Equal(t, "1", o.Location().String())
@@ -90,7 +90,7 @@ func TestOdometer(t *testing.T) {
 		assert.Equal(t, "98", o.String())
 	})
 
-	t.Run("really big odometer", func(t *testing.T) {
+	t.Run("really big enumerator", func(t *testing.T) {
 		o := New(charset.AllChars, 256)
 		assert.Equal(t, "1", o.Location().String())
 		assert.Equal(t, "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", o.String())
@@ -121,7 +121,7 @@ func TestOdometer(t *testing.T) {
 	})
 }
 
-func TestOdometer_Decrement(t *testing.T) {
+func TestEnumerator_Decrement(t *testing.T) {
 	o := New(charset.Numbers, 3)
 	assert.Equal(t, "1", o.Location().String())
 	assert.Equal(t, "000", o.String())
@@ -137,7 +137,7 @@ func TestOdometer_Decrement(t *testing.T) {
 	}
 }
 
-func TestOdometer_DecrementN(t *testing.T) {
+func TestEnumerator_DecrementN(t *testing.T) {
 	t.Run("default", func(t *testing.T) {
 		o := New(charset.Numbers, 2)
 		assert.Equal(t, "1", o.Location().String())
@@ -185,7 +185,7 @@ func TestOdometer_DecrementN(t *testing.T) {
 	})
 }
 
-func TestOdometer_GoTo(t *testing.T) {
+func TestEnumerator_GoTo(t *testing.T) {
 	o := New(charset.Numbers, 2)
 	assert.Equal(t, "1", o.Location().String())
 	assert.Equal(t, "00", o.String())
@@ -214,7 +214,7 @@ func TestOdometer_GoTo(t *testing.T) {
 	assert.True(t, errors.Is(err, ErrInvalidLocation))
 }
 
-func TestOdometer_Increment(t *testing.T) {
+func TestEnumerator_Increment(t *testing.T) {
 	o := New(charset.Numbers, 3)
 	assert.Equal(t, "1", o.Location().String())
 
@@ -225,7 +225,7 @@ func TestOdometer_Increment(t *testing.T) {
 	}
 }
 
-func TestOdometer_IncrementN(t *testing.T) {
+func TestEnumerator_IncrementN(t *testing.T) {
 	t.Run("default", func(t *testing.T) {
 		o := New(charset.Numbers, 2)
 		assert.Equal(t, "1", o.Location().String())

@@ -1,4 +1,4 @@
-package odometer
+package enumerator
 
 import (
 	"math"
@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func BenchmarkOdometer_Decrement(b *testing.B) {
+func BenchmarkEnumerator_Decrement(b *testing.B) {
 	o := New(charset.Numbers, 8, WithRolloverEnabled(true))
 
 	for i := 0; i < b.N; i++ {
@@ -19,7 +19,7 @@ func BenchmarkOdometer_Decrement(b *testing.B) {
 	}
 }
 
-func BenchmarkOdometer_Decrement_Big(b *testing.B) {
+func BenchmarkEnumerator_Decrement_Big(b *testing.B) {
 	o := New(charset.AllChars, 256)
 	o.Last()
 
@@ -28,7 +28,7 @@ func BenchmarkOdometer_Decrement_Big(b *testing.B) {
 	}
 }
 
-func BenchmarkOdometer_DecrementN(b *testing.B) {
+func BenchmarkEnumerator_DecrementN(b *testing.B) {
 	o := New(charset.Numbers, 8, WithRolloverEnabled(true))
 
 	n := big.NewInt(5)
@@ -37,7 +37,7 @@ func BenchmarkOdometer_DecrementN(b *testing.B) {
 	}
 }
 
-func BenchmarkOdometer_GoTo(b *testing.B) {
+func BenchmarkEnumerator_GoTo(b *testing.B) {
 	o := New(charset.Numbers, 8, WithRolloverEnabled(true))
 	maxValues := int64(math.Pow(10, 8))
 	rng := rand.New(rand.NewSource(time.Now().Unix()))
@@ -49,7 +49,7 @@ func BenchmarkOdometer_GoTo(b *testing.B) {
 	}
 }
 
-func BenchmarkOdometer_Increment(b *testing.B) {
+func BenchmarkEnumerator_Increment(b *testing.B) {
 	o := New(charset.Numbers, 8, WithRolloverEnabled(true))
 
 	for i := 0; i < b.N; i++ {
@@ -57,7 +57,7 @@ func BenchmarkOdometer_Increment(b *testing.B) {
 	}
 }
 
-func BenchmarkOdometer_Increment_Big(b *testing.B) {
+func BenchmarkEnumerator_Increment_Big(b *testing.B) {
 	o := New(charset.AllChars, 256)
 
 	for i := 0; i < b.N; i++ {
@@ -65,7 +65,7 @@ func BenchmarkOdometer_Increment_Big(b *testing.B) {
 	}
 }
 
-func BenchmarkOdometer_IncrementN(b *testing.B) {
+func BenchmarkEnumerator_IncrementN(b *testing.B) {
 	o := New(charset.Numbers, 8, WithRolloverEnabled(true))
 
 	n := big.NewInt(5)
@@ -74,7 +74,7 @@ func BenchmarkOdometer_IncrementN(b *testing.B) {
 	}
 }
 
-func BenchmarkOdometer_String(b *testing.B) {
+func BenchmarkEnumerator_String(b *testing.B) {
 	o := New(charset.Numbers, 12)
 
 	for i := 0; i < b.N; i++ {

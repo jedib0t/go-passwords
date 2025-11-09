@@ -99,12 +99,12 @@ Password # 10: "kmQVb&fPqexj"
 </pre>
 </details>
 
-## Odometer
+## Enumerator
 
-Odometer helps generate all possible string combinations of characters given a
+Enumerator helps generate all possible string combinations of characters given a
 list of characters and the expected length of the string.
 
-The `odometer` package provides optimal interfaces to move through the list:
+The `enumerator` package provides optimal interfaces to move through the list:
 * Decrement()
 * DecrementN(n)
 * GoTo(n)
@@ -114,7 +114,7 @@ The `odometer` package provides optimal interfaces to move through the list:
 
 ### Example
 ```golang
-	o := odometer.New(charset.AlphabetsUpper, 8)
+	o := enumerator.New(charset.AlphabetsUpper, 8)
 
 	for idx := 1; idx <= 10; idx++ {
 		fmt.Printf("Password #%3d: %#v\n", idx, o.String())
@@ -161,16 +161,16 @@ ok  	github.com/jedib0t/go-passwords/password	1.414s
 
 goos: linux
 goarch: amd64
-pkg: github.com/jedib0t/go-passwords/odometer
+pkg: github.com/jedib0t/go-passwords/enumerator
 cpu: AMD Ryzen 9 5900X 12-Core Processor            
-BenchmarkOdometer_Decrement-12        	56414820	        21.25 ns/op	       0 B/op	       0 allocs/op
-BenchmarkOdometer_Decrement_Big-12    	44742920	        27.37 ns/op	       0 B/op	       0 allocs/op
-BenchmarkOdometer_DecrementN-12       	 6536234	       177.3 ns/op	      16 B/op	       2 allocs/op
-BenchmarkOdometer_GotoLocation-12     	 5184144	       220.7 ns/op	      56 B/op	       4 allocs/op
-BenchmarkOdometer_Increment-12        	61866901	        19.37 ns/op	       0 B/op	       0 allocs/op
-BenchmarkOdometer_Increment_Big-12    	67560506	        17.68 ns/op	       0 B/op	       0 allocs/op
-BenchmarkOdometer_IncrementN-12       	 7371675	       172.7 ns/op	      16 B/op	       2 allocs/op
-BenchmarkOdometer_String-12           	14852208	        75.40 ns/op	      16 B/op	       1 allocs/op
+BenchmarkEnumerator_Decrement-12        	56414820	        21.25 ns/op	       0 B/op	       0 allocs/op
+BenchmarkEnumerator_Decrement_Big-12    	44742920	        27.37 ns/op	       0 B/op	       0 allocs/op
+BenchmarkEnumerator_DecrementN-12       	 6536234	       177.3 ns/op	      16 B/op	       2 allocs/op
+BenchmarkEnumerator_GoTo-12     	 5184144	       220.7 ns/op	      56 B/op	       4 allocs/op
+BenchmarkEnumerator_Increment-12        	61866901	        19.37 ns/op	       0 B/op	       0 allocs/op
+BenchmarkEnumerator_Increment_Big-12    	67560506	        17.68 ns/op	       0 B/op	       0 allocs/op
+BenchmarkEnumerator_IncrementN-12       	 7371675	       172.7 ns/op	      16 B/op	       2 allocs/op
+BenchmarkEnumerator_String-12           	14852208	        75.40 ns/op	      16 B/op	       1 allocs/op
 PASS
-ok  	github.com/jedib0t/go-passwords/odometer	10.282s
+ok  	github.com/jedib0t/go-passwords/enumerator	10.282s
 ```

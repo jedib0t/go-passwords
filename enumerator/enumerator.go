@@ -1,4 +1,4 @@
-package odometer
+package enumerator
 
 import (
 	"math/big"
@@ -12,9 +12,9 @@ var (
 	biOne  = big.NewInt(1)
 )
 
-// Odometer defines interfaces to manipulate an Odometer.
-type Odometer interface {
-	// AtEnd returns true if the Odometer is at the last possible value.
+// Enumerator defines interfaces to manipulate an Enumerator.
+type Enumerator interface {
+	// AtEnd returns true if the Enumerator is at the last possible value.
 	AtEnd() bool
 	// Decrement moves the gears back by one turn.
 	Decrement() bool
@@ -35,11 +35,11 @@ type Odometer interface {
 	// and is 1-indexed.
 	Location() *big.Int
 	// String returns the value as an end-user would see when they look at an
-	// Odometer.
+	// Enumerator.
 	String() string
 }
 
-type odometer struct {
+type enumerator struct {
 	base           int
 	baseBigInt     *big.Int
 	charset        []rune
@@ -52,13 +52,13 @@ type odometer struct {
 	valueInCharset []rune
 }
 
-// New returns a new Odometer with "length" gears each containing the given
+// New returns a new Enumerator with "length" gears each containing the given
 // Charset as the values.
-func New(cs charset.Charset, length int, opts ...Option) Odometer {
+func New(cs charset.Charset, length int, opts ...Option) Enumerator {
 	base := len(cs)
 	maxValues := numValues(base, length)
 
-	o := &odometer{
+	o := &enumerator{
 		base:           base,
 		baseBigInt:     big.NewInt(int64(base)),
 		charset:        []rune(cs),
@@ -74,14 +74,14 @@ func New(cs charset.Charset, length int, opts ...Option) Odometer {
 	return o
 }
 
-func (o *odometer) AtEnd() bool {
+func (o *enumerator) AtEnd() bool {
 	o.mutex.RLock()
 	defer o.mutex.RUnlock()
 
 	return o.location.Cmp(o.locationMax) >= 0
 }
 
-func (o *odometer) Decrement() bool {
+func (o *enumerator) Decrement() bool {
 	o.mutex.Lock()
 	defer o.mutex.Unlock()
 
@@ -104,7 +104,7 @@ func (o *odometer) Decrement() bool {
 	return true
 }
 
-func (o *odometer) DecrementN(n *big.Int) bool {
+func (o *enumerator) DecrementN(n *big.Int) bool {
 	o.mutex.Lock()
 	defer o.mutex.Unlock()
 
@@ -123,21 +123,21 @@ func (o *odometer) DecrementN(n *big.Int) bool {
 	return true
 }
 
-func (o *odometer) First() {
+func (o *enumerator) First() {
 	o.mutex.Lock()
 	defer o.mutex.Unlock()
 
 	o.first()
 }
 
-func (o *odometer) Location() *big.Int {
+func (o *enumerator) Location() *big.Int {
 	o.mutex.RLock()
 	defer o.mutex.RUnlock()
 
 	return new(big.Int).Set(o.location)
 }
 
-func (o *odometer) Increment() bool {
+func (o *enumerator) Increment() bool {
 	o.mutex.Lock()
 	defer o.mutex.Unlock()
 
@@ -160,7 +160,7 @@ func (o *odometer) Increment() bool {
 	return true
 }
 
-func (o *odometer) IncrementN(n *big.Int) bool {
+func (o *enumerator) IncrementN(n *big.Int) bool {
 	o.mutex.Lock()
 	defer o.mutex.Unlock()
 
@@ -179,14 +179,14 @@ func (o *odometer) IncrementN(n *big.Int) bool {
 	return true
 }
 
-func (o *odometer) Last() {
+func (o *enumerator) Last() {
 	o.mutex.Lock()
 	defer o.mutex.Unlock()
 
 	o.last()
 }
 
-func (o *odometer) GoTo(n *big.Int) error {
+func (o *enumerator) GoTo(n *big.Int) error {
 	o.mutex.Lock()
 	defer o.mutex.Unlock()
 
@@ -198,7 +198,7 @@ func (o *odometer) GoTo(n *big.Int) error {
 	return nil
 }
 
-func (o *odometer) String() string {
+func (o *enumerator) String() string {
 	o.mutex.Lock()
 	defer o.mutex.Unlock()
 
@@ -208,7 +208,7 @@ func (o *odometer) String() string {
 	return string(o.valueInCharset)
 }
 
-func (o *odometer) computeValue() {
+func (o *enumerator) computeValue() {
 	// base conversion: convert the value of location to a decimal with the
 	// given base using continuous division and use all the remainders as the
 	// values
@@ -228,7 +228,7 @@ func (o *odometer) computeValue() {
 	}
 }
 
-func (o *odometer) decrementAtIndex(idx int) bool {
+func (o *enumerator) decrementAtIndex(idx int) bool {
 	if o.value[idx] > 0 {
 		o.value[idx]--
 		return true
@@ -241,14 +241,14 @@ func (o *odometer) decrementAtIndex(idx int) bool {
 	return false
 }
 
-func (o *odometer) first() {
+func (o *enumerator) first() {
 	o.location.Set(biOne)
 	for idx := range o.value {
 		o.value[idx] = 0
 	}
 }
 
-func (o *odometer) incrementAtIndex(idx int) bool {
+func (o *enumerator) incrementAtIndex(idx int) bool {
 	if o.value[idx] < o.base-1 {
 		o.value[idx]++
 		return true
@@ -261,7 +261,7 @@ func (o *odometer) incrementAtIndex(idx int) bool {
 	return false
 }
 
-func (o *odometer) last() {
+func (o *enumerator) last() {
 	o.location.Set(o.locationMax)
 	for idx := range o.value {
 		o.value[idx] = o.base - 1
