@@ -266,3 +266,165 @@ func TestEnumerator_IncrementN(t *testing.T) {
 		assert.Equal(t, "04", o.String())
 	})
 }
+
+func TestEnumerator_AtEnd(t *testing.T) {
+	o := New(charset.Numbers, 2)
+	assert.False(t, o.AtEnd())
+
+	o.Last()
+	assert.True(t, o.AtEnd())
+
+	o.First()
+	assert.False(t, o.AtEnd())
+
+	o.Increment()
+	assert.False(t, o.AtEnd())
+}
+
+func TestEnumerator_decrementAtIndex_EdgeCases(t *testing.T) {
+	o := New(charset.Numbers, 3)
+
+	// Test decrementAtIndex edge case by trying to decrement when already at first
+	o.First()
+	// Try to decrement - should fail since we're at first
+	ok := o.Decrement()
+	assert.False(t, ok)
+	// Verify we're still at first
+	assert.Equal(t, "000", o.String())
+	assert.Equal(t, "1", o.Location().String())
+}
+
+func TestEnumerator_incrementAtIndex_EdgeCases(t *testing.T) {
+	o := New(charset.Numbers, 3)
+
+	// Test incrementAtIndex edge case by trying to increment when already at last
+	o.Last()
+	// Try to increment - should fail since we're at last
+	ok := o.Increment()
+	assert.False(t, ok)
+	// Verify we're still at last
+	maxLoc := o.Location()
+	o.GoTo(big.NewInt(1000))
+	assert.Equal(t, maxLoc.String(), o.Location().String())
+}
+
+func TestEnumerator_String_Cache(t *testing.T) {
+	o := New(charset.Numbers, 2)
+
+	// First call should compute and cache
+	str1 := o.String()
+	assert.Equal(t, "00", str1)
+
+	// Second call should use cache
+	str2 := o.String()
+	assert.Equal(t, "00", str2)
+	assert.Equal(t, str1, str2)
+
+	// After increment, cache should be invalidated
+	o.Increment()
+	str3 := o.String()
+	assert.Equal(t, "01", str3)
+	assert.NotEqual(t, str1, str3)
+}
+
+func TestEnumerator_ensureLocation(t *testing.T) {
+	o := New(charset.Numbers, 2)
+
+	// Initially location should be clean
+	loc1 := o.Location()
+	assert.Equal(t, "1", loc1.String())
+
+	// Increment should mark location as dirty
+	o.Increment()
+	// Location should be computed lazily
+	loc2 := o.Location()
+	assert.Equal(t, "2", loc2.String())
+
+	// Multiple increments without calling Location
+	o.Increment()
+	o.Increment()
+	o.Increment()
+	// Location should still compute correctly
+	loc3 := o.Location()
+	assert.Equal(t, "5", loc3.String())
+}
+
+func TestEnumerator_Decrement_LoopCompletion(t *testing.T) {
+	// Test case where decrementAtIndex doesn't return early in the loop
+	// This covers the case where the loop completes without early return
+	o := New(charset.Numbers, 1)
+	o.GoTo(big.NewInt(5))
+
+	// Decrement should work normally
+	ok := o.Decrement()
+	assert.True(t, ok)
+	assert.Equal(t, "4", o.Location().String())
+}
+
+func TestEnumerator_Increment_LoopCompletion(t *testing.T) {
+	// Test case where incrementAtIndex doesn't return early in the loop
+	// This covers the case where the loop completes without early return
+	o := New(charset.Numbers, 1)
+	o.GoTo(big.NewInt(5))
+
+	// Increment should work normally
+	ok := o.Increment()
+	assert.True(t, ok)
+	assert.Equal(t, "6", o.Location().String())
+}
+
+func TestEnumerator_decrementAtIndex_RecursiveFailure(t *testing.T) {
+	// Test the case where decrementAtIndex recursively calls itself but returns false
+	// This happens when we try to decrement beyond the first position
+	o := New(charset.Numbers, 2)
+	o.First()
+
+	// Try to decrement - should fail
+	ok := o.Decrement()
+	assert.False(t, ok)
+
+	// Verify we're still at first
+	assert.Equal(t, "00", o.String())
+	assert.Equal(t, "1", o.Location().String())
+}
+
+func TestEnumerator_incrementAtIndex_RecursiveFailure(t *testing.T) {
+	// Test the case where incrementAtIndex recursively calls itself but returns false
+	// This happens when we try to increment beyond the last position
+	o := New(charset.Numbers, 2)
+	o.Last()
+
+	// Try to increment - should fail
+	ok := o.Increment()
+	assert.False(t, ok)
+
+	// Verify we're still at last
+	assert.Equal(t, "99", o.String())
+	maxLoc := o.Location()
+	o.GoTo(big.NewInt(100))
+	assert.Equal(t, maxLoc.String(), o.Location().String())
+}
+
+func TestEnumerator_Decrement_AllPaths(t *testing.T) {
+	// Test Decrement when the loop doesn't find a match immediately
+	// This covers the path where decrementAtIndex returns false and loop continues
+	o := New(charset.Numbers, 3)
+	o.GoTo(big.NewInt(100)) // "099"
+
+	// Decrement should work
+	ok := o.Decrement()
+	assert.True(t, ok)
+	assert.Equal(t, "098", o.String())
+}
+
+func TestEnumerator_Increment_AllPaths(t *testing.T) {
+	// Test Increment when the loop doesn't find a match immediately
+	// This covers the path where incrementAtIndex returns false and loop continues
+	o := New(charset.Numbers, 3)
+	o.GoTo(big.NewInt(100)) // "099"
+
+	// Increment should work
+	ok := o.Increment()
+	assert.True(t, ok)
+	assert.Equal(t, "100", o.String())
+}

@@ -197,3 +197,162 @@ func getNumSymbols(pw string) int {
 	}
 	return rsp
 }
+
+func TestNewGenerator_ErrorCases(t *testing.T) {
+	t.Run("empty charset", func(t *testing.T) {
+		g, err := NewGenerator(WithCharset(charset.Charset("")))
+		assert.Nil(t, g)
+		assert.NotNil(t, err)
+		assert.Equal(t, ErrEmptyCharset, err)
+	})
+
+	t.Run("zero length", func(t *testing.T) {
+		g, err := NewGenerator(WithLength(0))
+		assert.Nil(t, g)
+		assert.NotNil(t, err)
+		assert.Equal(t, ErrZeroLenPassword, err)
+	})
+
+	t.Run("no lower case in charset", func(t *testing.T) {
+		g, err := NewGenerator(
+			WithCharset(charset.Charset("ABCDEF123456")),
+			WithLength(12),
+			WithMinLowerCase(5),
+		)
+		assert.Nil(t, g)
+		assert.NotNil(t, err)
+		assert.Equal(t, ErrNoLowerCaseInCharset, err)
+	})
+
+	t.Run("no upper case in charset", func(t *testing.T) {
+		g, err := NewGenerator(
+			WithCharset(charset.Charset("abcdef123456")),
+			WithLength(12),
+			WithMinUpperCase(5),
+		)
+		assert.Nil(t, g)
+		assert.NotNil(t, err)
+		assert.Equal(t, ErrNoUpperCaseInCharset, err)
+	})
+
+	t.Run("no symbols in charset", func(t *testing.T) {
+		g, err := NewGenerator(
+			WithCharset(charset.Charset("abcdefABCDEF123456")),
+			WithLength(12),
+			WithNumSymbols(1, 1),
+		)
+		assert.Nil(t, g)
+		assert.NotNil(t, err)
+		assert.Equal(t, ErrNoSymbolsInCharset, err)
+	})
+
+	t.Run("min lower case too long", func(t *testing.T) {
+		g, err := NewGenerator(
+			WithCharset(charset.Charset("abcdef")),
+			WithLength(5),
+			WithMinLowerCase(10),
+		)
+		assert.Nil(t, g)
+		assert.NotNil(t, err)
+		assert.Equal(t, ErrMinLowerCaseTooLong, err)
+	})
+
+	t.Run("min upper case too long", func(t *testing.T) {
+		g, err := NewGenerator(
+			WithCharset(charset.Charset("ABCDEF")),
+			WithLength(5),
+			WithMinUpperCase(10),
+		)
+		assert.Nil(t, g)
+		assert.NotNil(t, err)
+		assert.Equal(t, ErrMinUpperCaseTooLong, err)
+	})
+
+	t.Run("min symbols too long", func(t *testing.T) {
+		g, err := NewGenerator(
+			WithCharset(charset.Charset("abcdef!@#")),
+			WithLength(5),
+			WithNumSymbols(10, 10),
+		)
+		assert.Nil(t, g)
+		assert.NotNil(t, err)
+		assert.Equal(t, ErrMinSymbolsTooLong, err)
+	})
+
+	t.Run("requirements not met", func(t *testing.T) {
+		g, err := NewGenerator(
+			WithCharset(charset.Charset("abcdefABCDEF!@#")),
+			WithLength(5),
+			WithMinLowerCase(3),
+			WithMinUpperCase(3),
+			WithNumSymbols(1, 1),
+		)
+		assert.Nil(t, g)
+		assert.NotNil(t, err)
+		assert.Equal(t, ErrRequirementsNotMet, err)
+	})
+}
+
+func TestWithNumSymbols_EdgeCases(t *testing.T) {
+	t.Run("negative min", func(t *testing.T) {
+		g, err := NewGenerator(
+			WithCharset(charset.Charset("abcdef!@#")),
+			WithLength(12),
+			WithNumSymbols(-5, 3),
+		)
+		assert.NotNil(t, g)
+		assert.Nil(t, err)
+		// min should be sanitized to 0
+		for i := 0; i < 100; i++ {
+			pw := g.Generate()
+			numSymbols := getNumSymbols(pw)
+			assert.True(t, numSymbols >= 0 && numSymbols <= 3, "password: %s, symbols: %d", pw, numSymbols)
+		}
+	})
+
+	t.Run("negative max", func(t *testing.T) {
+		g, err := NewGenerator(
+			WithCharset(charset.Charset("abcdef!@#")),
+			WithLength(12),
+			WithNumSymbols(0, -5),
+		)
+		assert.NotNil(t, g)
+		assert.Nil(t, err)
+		// max should be sanitized to 0, so no symbols
+		for i := 0; i < 100; i++ {
+			pw := g.Generate()
+			numSymbols := getNumSymbols(pw)
+			assert.Equal(t, 0, numSymbols, "password: %s", pw)
+		}
+	})
+
+	t.Run("min > max", func(t *testing.T) {
+		g, err := NewGenerator(
+			WithCharset(charset.Charset("abcdef!@#")),
+			WithLength(12),
+			WithNumSymbols(5, 3),
+		)
+		assert.NotNil(t, g)
+		assert.Nil(t, err)
+		// min should be set to max (3)
+		for i := 0; i < 100; i++ {
+			pw := g.Generate()
+			numSymbols := getNumSymbols(pw)
+			assert.True(t, numSymbols >= 3 && numSymbols <= 3, "password: %s, symbols: %d", pw, numSymbols)
+		}
+	})
+}
+
+func TestNewGenerator_WithBasicRules(t *testing.T) {
+	// Test that NewGenerator applies basicRules by default
+	g, err := NewGenerator()
+	assert.NotNil(t, g)
+	assert.Nil(t, err)
+
+	// Should generate passwords with default settings (AllChars, length 12)
+	for i := 0; i < 10; i++ {
+		pw := g.Generate()
+		assert.Equal(t, 12, len(pw))
+		assert.NotEmpty(t, pw)
+	}
+}
