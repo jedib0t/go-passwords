@@ -17,3 +17,14 @@ func BenchmarkGenerator_Generate(b *testing.B) {
 		_, _ = g.Generate()
 	}
 }
+
+func BenchmarkGenerator_GenerateTo(b *testing.B) {
+	g, err := NewGenerator()
+	assert.Nil(b, err)
+	buf := make([]byte, 512)
+
+	b.ResetTimer()
+	for idx := 0; idx < b.N; idx++ {
+		_, _ = g.GenerateTo(buf)
+	}
+}
