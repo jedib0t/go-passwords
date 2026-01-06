@@ -2,13 +2,16 @@ package rng
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func BenchmarkIntN_Small(b *testing.B) {
 	n := 10
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = IntN(n)
+		_, err := IntN(n)
+		assert.Nil(b, err)
 	}
 }
 
@@ -16,7 +19,8 @@ func BenchmarkIntN_Medium(b *testing.B) {
 	n := 10000
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = IntN(n)
+		_, err := IntN(n)
+		assert.NoError(b, err)
 	}
 }
 
@@ -24,7 +28,8 @@ func BenchmarkIntN_Large(b *testing.B) {
 	n := 1000000
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = IntN(n)
+		_, err := IntN(n)
+		assert.NoError(b, err)
 	}
 }
 
@@ -32,7 +37,8 @@ func BenchmarkIntN_VeryLarge(b *testing.B) {
 	n := 1 << 32 // 2^32
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = IntN(n)
+		_, err := IntN(n)
+		assert.NoError(b, err)
 	}
 }
 
@@ -47,7 +53,8 @@ func BenchmarkShuffle_Small(b *testing.B) {
 		for j := range slice {
 			slice[j] = rune('a' + j)
 		}
-		Shuffle(slice)
+		err := Shuffle(slice)
+		assert.NoError(b, err)
 	}
 }
 
@@ -62,7 +69,8 @@ func BenchmarkShuffle_Medium(b *testing.B) {
 		for j := range slice {
 			slice[j] = rune(j % 256)
 		}
-		Shuffle(slice)
+		err := Shuffle(slice)
+		assert.NoError(b, err)
 	}
 }
 
@@ -77,6 +85,7 @@ func BenchmarkShuffle_Large(b *testing.B) {
 		for j := range slice {
 			slice[j] = rune(j % 256)
 		}
-		Shuffle(slice)
+		err := Shuffle(slice)
+		assert.NoError(b, err)
 	}
 }

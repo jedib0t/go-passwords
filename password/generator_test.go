@@ -21,7 +21,8 @@ func TestGenerator_Generate(t *testing.T) {
 	}
 
 	for idx := 0; idx < 100; idx++ {
-		password := g.Generate()
+		password, err := g.Generate()
+		assert.NoError(t, err)
 		assert.NotEmpty(t, password)
 		assert.Equal(t, 12, len(password), "password should be 12 characters long")
 		// Verify all characters are from the charset
@@ -42,7 +43,8 @@ func TestGenerator_Generate_WithAMixOfEverything(t *testing.T) {
 	assert.Nil(t, err)
 
 	for idx := 0; idx < 100; idx++ {
-		password := g.Generate()
+		password, err := g.Generate()
+		assert.NoError(t, err)
 		assert.NotEmpty(t, password)
 		assert.Equal(t, 12, len(password), "password should be 12 characters long")
 
@@ -65,7 +67,8 @@ func TestGenerator_Generate_WithSymbols(t *testing.T) {
 		assert.Nil(t, err)
 
 		for idx := 0; idx < 100; idx++ {
-			password := g.Generate()
+			password, err := g.Generate()
+			assert.NoError(t, err)
 			assert.NotEmpty(t, password)
 			assert.Equal(t, 12, len(password), "password should be 12 characters long")
 
@@ -84,7 +87,8 @@ func TestGenerator_Generate_WithSymbols(t *testing.T) {
 			assert.Nil(t, err)
 
 			for idx := 0; idx < 100; idx++ {
-				password := g.Generate()
+				password, err := g.Generate()
+				assert.NoError(t, err)
 				assert.NotEmpty(t, password)
 
 				numSymbols := getNumSymbols(password)
@@ -104,7 +108,8 @@ func TestGenerator_Generate_WithSymbols(t *testing.T) {
 			assert.Nil(t, err)
 
 			for idx := 0; idx < 100; idx++ {
-				password := g.Generate()
+				password, err := g.Generate()
+				assert.NoError(t, err)
 				assert.NotEmpty(t, password)
 				assert.Equal(t, x, getNumSymbols(password), password)
 			}
@@ -120,7 +125,8 @@ func TestGenerator_numSymbolsToGenerate(t *testing.T) {
 		maxSymbols: maxSymbols,
 	}
 	for idx := 0; idx < 10000; idx++ {
-		numSymbols := g.numSymbolsToGenerate()
+		numSymbols, err := g.numSymbolsToGenerate()
+		assert.NoError(t, err)
 		assert.True(t, numSymbols >= minSymbols, numSymbols)
 		assert.True(t, numSymbols <= maxSymbols, numSymbols)
 	}
@@ -242,7 +248,8 @@ func TestWithNumSymbols_EdgeCases(t *testing.T) {
 		assert.Nil(t, err)
 		// min should be sanitized to 0
 		for i := 0; i < 100; i++ {
-			pw := g.Generate()
+			pw, err := g.Generate()
+			assert.NoError(t, err)
 			numSymbols := getNumSymbols(pw)
 			assert.True(t, numSymbols >= 0 && numSymbols <= 3, "password: %s, symbols: %d", pw, numSymbols)
 		}
@@ -258,7 +265,8 @@ func TestWithNumSymbols_EdgeCases(t *testing.T) {
 		assert.Nil(t, err)
 		// max should be sanitized to 0, so no symbols
 		for i := 0; i < 100; i++ {
-			pw := g.Generate()
+			pw, err := g.Generate()
+			assert.NoError(t, err)
 			numSymbols := getNumSymbols(pw)
 			assert.Equal(t, 0, numSymbols, "password: %s", pw)
 		}
@@ -274,7 +282,8 @@ func TestWithNumSymbols_EdgeCases(t *testing.T) {
 		assert.Nil(t, err)
 		// min should be set to max (3)
 		for i := 0; i < 100; i++ {
-			pw := g.Generate()
+			pw, err := g.Generate()
+			assert.NoError(t, err)
 			numSymbols := getNumSymbols(pw)
 			assert.True(t, numSymbols >= 3 && numSymbols <= 3, "password: %s, symbols: %d", pw, numSymbols)
 		}
@@ -289,7 +298,8 @@ func TestNewGenerator_WithBasicRules(t *testing.T) {
 
 	// Should generate passwords with default settings (AllChars, length 12)
 	for i := 0; i < 10; i++ {
-		pw := g.Generate()
+		pw, err := g.Generate()
+		assert.NoError(t, err)
 		assert.Equal(t, 12, len(pw))
 		assert.NotEmpty(t, pw)
 	}

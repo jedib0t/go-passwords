@@ -20,6 +20,6 @@ var (
 // * injects a random number behind one of the words
 // * uses "-" as the separator
 // * ensures words used are between 4 and 7 characters long
-func Generate() string {
+func Generate() (string, error) {
 	return defaultGenerator.Generate()
 }

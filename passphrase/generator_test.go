@@ -21,7 +21,8 @@ func TestGenerator_Generate(t *testing.T) {
 	assert.Nil(t, err)
 
 	for idx := 0; idx < 1000; idx++ {
-		passphrase := g.Generate()
+		passphrase, err := g.Generate()
+		assert.NoError(t, err)
 		assert.NotEmpty(t, passphrase)
 
 		// Verify structure: should have 3 words separated by "-"

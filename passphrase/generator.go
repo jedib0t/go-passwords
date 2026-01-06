@@ -1,7 +1,6 @@
 package passphrase
 
 import (
-	"fmt"
 	"slices"
 	"strings"
 	"unicode"
@@ -18,7 +17,7 @@ const (
 
 type Generator interface {
 	// Generate returns a randomly generated password.
-	Generate() string
+	Generate() (string, error)
 }
 
 type generator struct {
@@ -43,30 +42,60 @@ func NewGenerator(rules ...Rule) (Generator, error) {
 }
 
 // Generate returns a randomly generated password.
-func (g *generator) Generate() string {
+func (g *generator) Generate() (string, error) {
+	// create and pre-allocate the builder
+	var b strings.Builder
+	// estimate the capacity needed
+	b.Grow(g.wordLenMin*g.numWords + len(g.separator)*(g.numWords-1) + 1)
 
-	// select words
-	var words []string
-	var wordsMap = make(map[string]bool)
-	for idx := 0; idx < g.numWords; idx++ {
-		var word string
-		for word == "" || wordsMap[word] {
-			word = g.dictionary[rng.IntN(g.dictionaryLen)]
-		}
-		words = append(words, word)
-		wordsMap[word] = true
-	}
-
-	// inject a random number after one of the words
+	// inject a random number after one of the words if asked for
+	wordForDigitSuffixIdx, digit := -1, 0
 	if g.withNumber {
-		idx := rng.IntN(len(words))
-		words[idx] += fmt.Sprint(rng.IntN(10))
+		var err error
+
+		wordForDigitSuffixIdx, err = rng.IntN(g.numWords)
+		if err != nil {
+			return "", err
+		}
+		digit, err = rng.IntN(10)
+		if err != nil {
+			return "", err
+		}
 	}
 
-	return strings.Join(words, g.separator)
+	// append words to the builder
+	var wordIndicesMap = make(map[int]bool)
+	for idx := 0; idx < g.numWords; idx++ {
+		// select a random word index from the dictionary (non-repeating)
+		var wordIndex int
+		var err error
+		for wordIndex == 0 || wordIndicesMap[wordIndex] {
+			wordIndex, err = rng.IntN(g.dictionaryLen)
+			if err != nil {
+				return "", err
+			}
+		}
+		wordIndicesMap[wordIndex] = true
+
+		// append the word to the builder
+		b.WriteString(g.dictionary[wordIndex])
+
+		// append the digit to the builder if asked for
+		if wordForDigitSuffixIdx != -1 && idx == wordForDigitSuffixIdx {
+			b.WriteString(string('0' + byte(digit)))
+		}
+
+		// append the separator if not the last word
+		if idx < g.numWords-1 {
+			b.WriteString(g.separator)
+		}
+	}
+
+	return b.String(), nil
 }
 
 func (g *generator) sanitize() (Generator, error) {
+	// check if the word length is valid
 	if g.wordLenMin < 1 || g.wordLenMin > g.wordLenMax {
 		return nil, ErrWordLengthInvalid
 	}
@@ -78,6 +107,7 @@ func (g *generator) sanitize() (Generator, error) {
 	slices.Sort(g.dictionary)
 	g.dictionary = slices.Compact(g.dictionary)
 	g.dictionaryLen = len(g.dictionary)
+
 	// check if the dictionary is too small
 	if g.dictionaryLen < g.numWords || g.dictionaryLen < MinWordsInDictionary {
 		return nil, ErrDictionaryTooSmall
@@ -93,6 +123,7 @@ func (g *generator) sanitize() (Generator, error) {
 		}
 	}
 
+	// check if the number of words is too small or too large
 	if g.numWords < NumWordsMin {
 		return nil, ErrNumWordsTooSmall
 	}

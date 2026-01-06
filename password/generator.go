@@ -1,6 +1,7 @@
 package password
 
 import (
+	"fmt"
 	"sync"
 	"unicode"
 
@@ -16,7 +17,7 @@ var (
 
 type Generator interface {
 	// Generate returns a randomly generated password.
-	Generate() string
+	Generate() (string, error)
 }
 
 type generator struct {
@@ -61,46 +62,73 @@ func NewGenerator(rules ...Rule) (Generator, error) {
 }
 
 // Generate returns a randomly generated password.
-func (g *generator) Generate() string {
+func (g *generator) Generate() (string, error) {
 	// use the pool to get a []rune for working on
 	password := g.pool.Get().([]rune)
 	defer g.pool.Put(password)
 
 	// init the filler
 	idx := 0
-	fillPassword := func(runes []rune, count int) {
+	fillPassword := func(runes []rune, count int) error {
 		for ; idx < len(password) && count > 0; count-- {
-			password[idx] = runes[rng.IntN(len(runes))]
+			n, err := rng.IntN(len(runes))
+			if err != nil {
+				return fmt.Errorf("failed to generate random number: %w", err)
+			}
+			password[idx] = runes[n]
 			idx++
 		}
+		return nil
 	}
 
 	// fill it with minimum requirements first
 	if g.minLowerCase > 0 {
-		fillPassword(g.charsetCaseLower, g.minLowerCase)
+		if err := fillPassword(g.charsetCaseLower, g.minLowerCase); err != nil {
+			return "", err
+		}
 	}
+	// fill the minimum upper case characters
 	if g.minUpperCase > 0 {
-		fillPassword(g.charsetCaseUpper, g.minUpperCase)
+		if err := fillPassword(g.charsetCaseUpper, g.minUpperCase); err != nil {
+			return "", err
+		}
 	}
-	if numSymbols := g.numSymbolsToGenerate(); numSymbols > 0 {
-		fillPassword(g.charsetSymbols, numSymbols)
+	// fill the minimum symbols
+	if numSymbols, err := g.numSymbolsToGenerate(); err != nil {
+		return "", fmt.Errorf("failed to generate number of symbols: %w", err)
+	} else if numSymbols > 0 {
+		if err := fillPassword(g.charsetSymbols, numSymbols); err != nil {
+			return "", err
+		}
 	}
 	// fill the rest with non-symbols (as symbols has a max)
 	if remainingChars := len(password) - idx; remainingChars > 0 {
-		fillPassword(g.charsetNonSymbols, remainingChars)
+		if err := fillPassword(g.charsetNonSymbols, remainingChars); err != nil {
+			return "", err
+		}
 	}
 
 	// shuffle it all
-	rng.Shuffle(password)
+	if err := rng.Shuffle(password); err != nil {
+		return "", fmt.Errorf("failed to shuffle password: %w", err)
+	}
 
-	return string(password)
+	return string(password), nil
 }
 
-func (g *generator) numSymbolsToGenerate() int {
+func (g *generator) numSymbolsToGenerate() (int, error) {
 	if g.minSymbols > 0 || g.maxSymbols > 0 {
-		return rng.IntN(g.maxSymbols-g.minSymbols+1) + g.minSymbols
+		// If min == max, no randomness needed
+		if g.minSymbols == g.maxSymbols {
+			return g.minSymbols, nil
+		}
+		n, err := rng.IntN(g.maxSymbols - g.minSymbols + 1)
+		if err != nil {
+			return 0, fmt.Errorf("failed to generate random number: %w", err)
+		}
+		return n + g.minSymbols, nil
 	}
-	return 0
+	return 0, nil
 }
 
 func (g *generator) sanitize() (Generator, error) {
