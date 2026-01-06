@@ -63,8 +63,11 @@ func (g *generator) Generate() (string, error) {
 		}
 	}
 
+	// Select unique word indices using rejection sampling
+	// For small numWords (typically 2-4), this is efficient and avoids large allocations
+	wordIndicesMap := make(map[int]bool, g.numWords)
+
 	// append words to the builder
-	var wordIndicesMap = make(map[int]bool)
 	for idx := 0; idx < g.numWords; idx++ {
 		// select a random word index from the dictionary (non-repeating)
 		var wordIndex int
@@ -76,7 +79,6 @@ func (g *generator) Generate() (string, error) {
 			}
 		}
 		wordIndicesMap[wordIndex] = true
-
 		// append the word to the builder
 		b.WriteString(g.dictionary[wordIndex])
 

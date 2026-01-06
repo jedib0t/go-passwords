@@ -48,7 +48,7 @@ func IntN(n int) (int, error) {
 }
 
 // Shuffle shuffles the slice using Fisher-Yates algorithm with crypto/rand.
-func Shuffle(slice []rune) error {
+func Shuffle[T any](slice []T) error {
 	for i := len(slice) - 1; i > 0; i-- {
 		j, err := IntN(i + 1)
 		if err != nil {
