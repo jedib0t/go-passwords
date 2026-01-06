@@ -10,18 +10,35 @@ import (
 	"github.com/jedib0t/go-passwords/password"
 )
 
+var (
+	colorReset     = "\033[0m"
+	colorBold      = "\033[1m"
+	colorUnderline = "\033[4m"
+)
+
 func main() {
-	fmt.Println("Passphrases:")
-	demoPassphraseGenerator()
-	fmt.Println()
+	report := func(name string, fn func()) {
+		fmt.Printf("%s%s%s%s:\n", colorBold, colorUnderline, name, colorReset)
+		fn()
+		fmt.Println()
+	}
 
-	fmt.Println("Passwords:")
-	demoPasswordGenerator()
-	fmt.Println()
+	report("Enumerator", demoEnumerator)
+	report("Passphrases", demoPassphraseGenerator)
+	report("Passwords", demoPasswordGenerator)
+}
 
-	fmt.Println("Enumerator:")
-	demoEnumerator()
-	fmt.Println()
+func demoEnumerator() {
+	o := enumerator.New(charset.AlphabetsUpper, 8)
+
+	for idx := 1; idx <= 10; idx++ {
+		fmt.Printf("Password #%3d: %#v\n", idx, o.String())
+
+		if o.AtEnd() {
+			break
+		}
+		o.Increment()
+	}
 }
 
 func demoPassphraseGenerator() {
@@ -62,18 +79,5 @@ func demoPasswordGenerator() {
 			panic(err.Error())
 		}
 		fmt.Printf("Password #%3d: %#v\n", idx, pw)
-	}
-}
-
-func demoEnumerator() {
-	o := enumerator.New(charset.AlphabetsUpper, 8)
-
-	for idx := 1; idx <= 10; idx++ {
-		fmt.Printf("Password #%3d: %#v\n", idx, o.String())
-
-		if o.AtEnd() {
-			break
-		}
-		o.Increment()
 	}
 }

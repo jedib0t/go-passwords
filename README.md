@@ -33,7 +33,11 @@ Passphrases combine 2+ words with separators, optionally capitalized and with nu
 		panic(err.Error())
 	}
 	for i := 1; i <= 10; i++ {
-		fmt.Printf("Passphrase #%3d: %#v\n", i, g.Generate())
+		passphrase, err := g.Generate()
+		if err != nil {
+			panic(err)
+		}
+		fmt.Printf("Passphrase #%3d: %#v\n", i, passphrase)
 	}
 ```
 <details>
@@ -76,7 +80,11 @@ Generate cryptographically secure random passwords with fine-grained character r
 		panic(err.Error())
 	}
 	for i := 1; i <= 10; i++ {
-		fmt.Printf("Password #%3d: %#v\n", i, g.Generate())
+		password, err := g.Generate()
+		if err != nil {
+			panic(err)
+		}
+		fmt.Printf("Password #%3d: %#v\n", i, password)
 	}
 ```
 <details>
@@ -138,13 +146,16 @@ Combination # 10: "AAAAAAAJ"
 
 Benchmarked on AMD Ryzen 9 9950X3D:
 
-| Operation | Time | Allocations |
-|-----------|------|-------------|
-| **Enumerator** | | |
-| Increment/Decrement | ~17 ns/op | 0 B/op, 0 allocs/op |
-| IncrementN/DecrementN | ~110 ns/op | 0 B/op, 0 allocs/op |
-| String | ~16 ns/op | 0 B/op, 0 allocs/op |
-| **Password Generation** | ~117 ns/op | 40 B/op, 2 allocs/op |
-| **Passphrase Generation** | ~160 ns/op | 144 B/op, 5 allocs/op |
+| Package | Operation | Time | Allocations |
+|---------|-----------|------|-------------|
+| **Enumerator** | Increment/Decrement | ~17 ns/op | 0 B/op, 0 allocs/op |
+| **Enumerator** | IncrementN/DecrementN | ~104 ns/op | 0 B/op, 0 allocs/op |
+| **Enumerator** | String | ~16 ns/op | 0 B/op, 0 allocs/op |
+| **Passphrase** | Generate | ~133 ns/op | 47 B/op, 2 allocs/op |
+| **Password** | Generate | ~345 ns/op | 40 B/op, 2 allocs/op |
+| **RNG** | IntN | ~17 ns/op | 0 B/op, 0 allocs/op |
+| **RNG** | Shuffle (Small) | ~112 ns/op | 0 B/op, 0 allocs/op |
+| **RNG** | Shuffle (Medium) | ~1200 ns/op | 0 B/op, 0 allocs/op |
+| **RNG** | Shuffle (Large) | ~16100 ns/op | 0 B/op, 0 allocs/op |
 
-Run benchmarks: `go test -bench=. -benchmem ./enumerator ./passphrase ./password`
+Run benchmarks: `make bench`
