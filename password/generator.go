@@ -1,23 +1,22 @@
 package password
 
 import (
-	"math/rand/v2"
 	"sync"
-	"time"
 	"unicode"
 
 	"github.com/jedib0t/go-passwords/charset"
+	"github.com/jedib0t/go-passwords/rng"
 )
 
 var (
+	// storagePoolMinSize is the minimum number of objects to keep in the pool
+	// to support enough parallelism.
 	storagePoolMinSize = 25
 )
 
 type Generator interface {
 	// Generate returns a randomly generated password.
 	Generate() string
-	// SetSeed overrides the seed value for the RNG.
-	SetSeed(seed uint64)
 }
 
 type generator struct {
@@ -32,14 +31,12 @@ type generator struct {
 	maxSymbols        int
 	numChars          int
 	pool              *sync.Pool
-	rng               *rand.Rand
 }
 
 // NewGenerator returns a password generator that implements the Generator
 // interface.
 func NewGenerator(rules ...Rule) (Generator, error) {
 	g := &generator{}
-	g.SetSeed(uint64(time.Now().UnixNano()))
 	for _, opt := range append(basicRules, rules...) {
 		opt(g)
 	}
@@ -73,7 +70,7 @@ func (g *generator) Generate() string {
 	idx := 0
 	fillPassword := func(runes []rune, count int) {
 		for ; idx < len(password) && count > 0; count-- {
-			password[idx] = runes[g.rng.IntN(len(runes))]
+			password[idx] = runes[rng.IntN(len(runes))]
 			idx++
 		}
 	}
@@ -94,21 +91,14 @@ func (g *generator) Generate() string {
 	}
 
 	// shuffle it all
-	g.rng.Shuffle(len(password), func(i, j int) {
-		password[i], password[j] = password[j], password[i]
-	})
+	rng.Shuffle(password)
 
 	return string(password)
 }
 
-// SetSeed overrides the seed value for the RNG.
-func (g *generator) SetSeed(seed uint64) {
-	g.rng = rand.New(rand.NewPCG(seed, seed+100))
-}
-
 func (g *generator) numSymbolsToGenerate() int {
 	if g.minSymbols > 0 || g.maxSymbols > 0 {
-		return g.rng.IntN(g.maxSymbols-g.minSymbols+1) + g.minSymbols
+		return rng.IntN(g.maxSymbols-g.minSymbols+1) + g.minSymbols
 	}
 	return 0
 }

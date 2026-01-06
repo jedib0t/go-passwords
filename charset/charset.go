@@ -20,8 +20,15 @@ const (
 	AllChars     = AlphaNumeric + Symbols
 	AlphaNumeric = Alphabets + Numbers
 	Alphabets    = AlphabetsUpper + AlphabetsLower
+)
 
-	ambiguous Charset = "O0lI"
+var (
+	ambiguousCharacters = map[rune]bool{
+		'O': true,
+		'0': true,
+		'l': true,
+		'I': true,
+	}
 )
 
 // Contains returns true if the Charset contains the given char/rune.
@@ -47,7 +54,7 @@ func (c Charset) Shuffle(rng *rand.Rand) Charset {
 func (c Charset) WithoutAmbiguity() Charset {
 	sb := strings.Builder{}
 	for _, r := range c {
-		if strings.Contains(string(ambiguous), string(r)) {
+		if ambiguousCharacters[r] {
 			continue
 		}
 		sb.WriteRune(r)
@@ -57,12 +64,14 @@ func (c Charset) WithoutAmbiguity() Charset {
 
 // WithoutDuplicates removes duplicate characters.
 func (c Charset) WithoutDuplicates() Charset {
+	seen := make(map[rune]bool)
 	sb := strings.Builder{}
 	for _, r := range c {
-		if strings.Contains(sb.String(), string(r)) {
+		if seen[r] {
 			continue
 		}
 		sb.WriteRune(r)
+		seen[r] = true
 	}
 	return Charset(sb.String())
 }

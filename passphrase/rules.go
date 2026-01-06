@@ -23,6 +23,7 @@ func WithCapitalizedWords(enabled bool) Rule {
 	}
 }
 
+// WithDictionary sets the dictionary of words to use for the passphrase.
 func WithDictionary(words []string) Rule {
 	return func(g *generator) {
 		g.dictionary = words
@@ -50,6 +51,7 @@ func WithSeparator(s string) Rule {
 	}
 }
 
+// WithWordLength sets the minimum and maximum length of the words in the passphrase.
 func WithWordLength(min, max int) Rule {
 	return func(g *generator) {
 		g.wordLenMin = min

@@ -7,8 +7,7 @@ import (
 )
 
 func TestGenerate(t *testing.T) {
-	assert.NotEmpty(t, Generate())
-
-	SetSeed(1)
-	assert.Equal(t, "rk&nkRHeg54P", Generate())
+	password := Generate()
+	assert.NotEmpty(t, password)
+	assert.Equal(t, 12, len(password), "password should be 12 characters long")
 }

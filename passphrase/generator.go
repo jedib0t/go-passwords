@@ -2,12 +2,12 @@ package passphrase
 
 import (
 	"fmt"
-	"math/rand/v2"
 	"slices"
 	"strings"
-	"time"
 	"unicode"
 	"unicode/utf8"
+
+	"github.com/jedib0t/go-passwords/rng"
 )
 
 const (
@@ -19,26 +19,23 @@ const (
 type Generator interface {
 	// Generate returns a randomly generated password.
 	Generate() string
-	// SetSeed overrides the seed value for the RNG.
-	SetSeed(seed uint64)
 }
 
 type generator struct {
-	capitalize bool
-	dictionary []string
-	separator  string
-	numWords   int
-	rng        *rand.Rand
-	withNumber bool
-	wordLenMin int
-	wordLenMax int
+	capitalize    bool
+	dictionary    []string
+	dictionaryLen int
+	separator     string
+	numWords      int
+	withNumber    bool
+	wordLenMin    int
+	wordLenMax    int
 }
 
 // NewGenerator returns a password generator that implements the Generator
 // interface.
 func NewGenerator(rules ...Rule) (Generator, error) {
 	g := &generator{}
-	g.SetSeed(uint64(time.Now().UnixNano()))
 	for _, opt := range append(basicRules, rules...) {
 		opt(g)
 	}
@@ -47,28 +44,26 @@ func NewGenerator(rules ...Rule) (Generator, error) {
 
 // Generate returns a randomly generated password.
 func (g *generator) Generate() string {
-	var words []string
 
 	// select words
+	var words []string
+	var wordsMap = make(map[string]bool)
 	for idx := 0; idx < g.numWords; idx++ {
 		var word string
-		for word == "" || slices.Contains(words, word) {
-			word = g.dictionary[g.rng.IntN(len(g.dictionary))]
+		for word == "" || wordsMap[word] {
+			word = g.dictionary[rng.IntN(g.dictionaryLen)]
 		}
 		words = append(words, word)
+		wordsMap[word] = true
 	}
+
 	// inject a random number after one of the words
 	if g.withNumber {
-		idx := g.rng.IntN(len(words))
-		words[idx] += fmt.Sprint(g.rng.IntN(10))
+		idx := rng.IntN(len(words))
+		words[idx] += fmt.Sprint(rng.IntN(10))
 	}
 
 	return strings.Join(words, g.separator)
-}
-
-// SetSeed overrides the seed value for the RNG.
-func (g *generator) SetSeed(seed uint64) {
-	g.rng = rand.New(rand.NewPCG(seed, seed+100))
 }
 
 func (g *generator) sanitize() (Generator, error) {
@@ -82,7 +77,9 @@ func (g *generator) sanitize() (Generator, error) {
 	})
 	slices.Sort(g.dictionary)
 	g.dictionary = slices.Compact(g.dictionary)
-	if len(g.dictionary) < MinWordsInDictionary {
+	g.dictionaryLen = len(g.dictionary)
+	// check if the dictionary is too small
+	if g.dictionaryLen < g.numWords || g.dictionaryLen < MinWordsInDictionary {
 		return nil, ErrDictionaryTooSmall
 	}
 

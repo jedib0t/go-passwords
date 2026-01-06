@@ -1,8 +1,7 @@
 package passphrase
 
 import (
-	"fmt"
-	"slices"
+	"strings"
 	"testing"
 
 	"github.com/jedib0t/go-passwords/passphrase/dictionaries"
@@ -20,32 +19,32 @@ func TestGenerator_Generate(t *testing.T) {
 	)
 	assert.NotNil(t, g)
 	assert.Nil(t, err)
-	g.SetSeed(1)
 
-	expectedPassphrases := []string{
-		"Eaters-Likers6-Coiler",
-		"Shags-Obeyed2-Tweeze",
-		"Reared-Campos-Umbral5",
-		"Subers-Bemean-Sall6",
-		"Priory1-Prayer-Mirk",
-		"Kills8-Alkoxy-Sequel",
-		"Long-Reply-Coco4",
-		"Embank3-Tusche-Degage",
-		"Pitons-Luce9-Jabber",
-		"Flavin-Capful-Leaved2",
-	}
-	var actualPhrases []string
 	for idx := 0; idx < 1000; idx++ {
 		passphrase := g.Generate()
 		assert.NotEmpty(t, passphrase)
-		if idx < len(expectedPassphrases) {
-			actualPhrases = append(actualPhrases, passphrase)
-			assert.Equal(t, expectedPassphrases[idx], passphrase)
+
+		// Verify structure: should have 3 words separated by "-"
+		words := strings.Split(passphrase, "-")
+		assert.Equal(t, 3, len(words), "passphrase should have 3 words: %s", passphrase)
+
+		// Verify each word is capitalized and has a number in one of them
+		hasNumber := false
+		for _, word := range words {
+			// Check that word starts with uppercase
+			assert.True(t, len(word) > 0, "word should not be empty")
+			assert.True(t, word[0] >= 'A' && word[0] <= 'Z', "word should start with uppercase: %s", word)
+			// Check word length is between 4 and 6 (plus possibly a digit)
+			assert.True(t, len(word) >= 4 && len(word) <= 7, "word length should be 4-7 (including possible digit): %s", word)
+
+			// Check if word contains a digit
+			for _, r := range word {
+				if r >= '0' && r <= '9' {
+					hasNumber = true
+					break
+				}
+			}
 		}
-	}
-	if !slices.Equal(expectedPassphrases, actualPhrases) {
-		for _, pw := range actualPhrases {
-			fmt.Printf("%#v,\n", pw)
-		}
+		assert.True(t, hasNumber, "passphrase should contain at least one number: %s", passphrase)
 	}
 }
