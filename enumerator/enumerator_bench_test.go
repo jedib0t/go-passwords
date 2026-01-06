@@ -43,7 +43,8 @@ func BenchmarkEnumerator_GoTo(b *testing.B) {
 	rng := rand.New(rand.NewSource(time.Now().Unix()))
 
 	for i := 0; i < b.N; i++ {
-		n := big.NewInt(rng.Int63n(maxValues))
+		// GoTo is 1-indexed, so generate values in [1, maxValues]
+		n := big.NewInt(rng.Int63n(maxValues) + 1)
 		err := o.GoTo(n)
 		assert.Nil(b, err)
 	}

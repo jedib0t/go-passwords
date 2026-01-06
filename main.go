@@ -37,7 +37,11 @@ func demoPassphraseGenerator() {
 		panic(err.Error())
 	}
 	for idx := 1; idx <= 10; idx++ {
-		fmt.Printf("Passphrase #%3d: %#v\n", idx, g.Generate())
+		phrase, err := g.Generate()
+		if err != nil {
+			panic(err.Error())
+		}
+		fmt.Printf("Passphrase #%3d: %#v\n", idx, phrase)
 	}
 }
 
@@ -53,7 +57,11 @@ func demoPasswordGenerator() {
 		panic(err.Error())
 	}
 	for idx := 1; idx <= 10; idx++ {
-		fmt.Printf("Password #%3d: %#v\n", idx, g.Generate())
+		pw, err := g.Generate()
+		if err != nil {
+			panic(err.Error())
+		}
+		fmt.Printf("Password #%3d: %#v\n", idx, pw)
 	}
 }
 

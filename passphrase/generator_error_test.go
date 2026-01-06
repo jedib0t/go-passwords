@@ -80,7 +80,8 @@ func TestGenerator_sanitize_EdgeCases(t *testing.T) {
 
 		// Generate a few phrases to ensure it works
 		for i := 0; i < 5; i++ {
-			phrase := g.Generate()
+			phrase, err := g.Generate()
+			assert.NoError(t, err)
 			assert.NotEmpty(t, phrase)
 		}
 	})
@@ -98,7 +99,8 @@ func TestGenerator_Generate_EdgeCases(t *testing.T) {
 		assert.Nil(t, err)
 
 		for i := 0; i < 10; i++ {
-			phrase := g.Generate()
+			phrase, err := g.Generate()
+			assert.NoError(t, err)
 			assert.NotEmpty(t, phrase)
 			// Should not contain digits
 			hasDigit := false
@@ -123,7 +125,8 @@ func TestGenerator_Generate_EdgeCases(t *testing.T) {
 			assert.NotNil(t, g)
 			assert.Nil(t, err)
 
-			phrase := g.Generate()
+			phrase, err := g.Generate()
+			assert.NoError(t, err)
 			assert.NotEmpty(t, phrase)
 		}
 	})

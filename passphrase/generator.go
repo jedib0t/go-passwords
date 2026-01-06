@@ -18,7 +18,7 @@ const (
 
 type Generator interface {
 	// Generate returns a randomly generated password.
-	Generate() string
+	Generate() (string, error)
 }
 
 type generator struct {
@@ -43,7 +43,7 @@ func NewGenerator(rules ...Rule) (Generator, error) {
 }
 
 // Generate returns a randomly generated password.
-func (g *generator) Generate() string {
+func (g *generator) Generate() (string, error) {
 
 	// select words
 	var words []string
@@ -51,7 +51,11 @@ func (g *generator) Generate() string {
 	for idx := 0; idx < g.numWords; idx++ {
 		var word string
 		for word == "" || wordsMap[word] {
-			word = g.dictionary[rng.IntN(g.dictionaryLen)]
+			n, err := rng.IntN(g.dictionaryLen)
+			if err != nil {
+				return "", err
+			}
+			word = g.dictionary[n]
 		}
 		words = append(words, word)
 		wordsMap[word] = true
@@ -59,11 +63,18 @@ func (g *generator) Generate() string {
 
 	// inject a random number after one of the words
 	if g.withNumber {
-		idx := rng.IntN(len(words))
-		words[idx] += fmt.Sprint(rng.IntN(10))
+		idx, err := rng.IntN(len(words))
+		if err != nil {
+			return "", err
+		}
+		digit, err := rng.IntN(10)
+		if err != nil {
+			return "", err
+		}
+		words[idx] += fmt.Sprint(digit)
 	}
 
-	return strings.Join(words, g.separator)
+	return strings.Join(words, g.separator), nil
 }
 
 func (g *generator) sanitize() (Generator, error) {

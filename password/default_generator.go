@@ -18,6 +18,6 @@ var (
 // * uses a minimum of 3 lower case characters
 // * uses a minimum of 1 upper case character
 // * uses one symbol character
-func Generate() string {
+func Generate() (string, error) {
 	return defaultGenerator.Generate()
 }

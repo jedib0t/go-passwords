@@ -9,9 +9,11 @@ import (
 func BenchmarkGenerator_Generate(b *testing.B) {
 	g, err := NewGenerator()
 	assert.Nil(b, err)
-	assert.NotEmpty(b, g.Generate())
+	phrase, err := g.Generate()
+	assert.Nil(b, err)
+	assert.NotEmpty(b, phrase)
 
 	for idx := 0; idx < b.N; idx++ {
-		_ = g.Generate()
+		_, _ = g.Generate()
 	}
 }

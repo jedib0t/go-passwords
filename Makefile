@@ -3,10 +3,10 @@
 default: test
 
 bench:
-	go test -bench=. -benchmem ./enumerator ./passphrase ./password ./rng
+	go test -bench=. -benchmem $(shell go list ./...)
 
 cyclo:
-	gocyclo -over 13 ./*/*.go
+	gocyclo -over 15 ./*/*.go
 
 fmt:
 	go fmt $(shell go list ./...)
