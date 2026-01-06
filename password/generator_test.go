@@ -1,8 +1,6 @@
 package password
 
 import (
-	"fmt"
-	"slices"
 	"testing"
 	"unicode"
 
@@ -16,32 +14,19 @@ func TestGenerator_Generate(t *testing.T) {
 		WithLength(12),
 	)
 	assert.Nil(t, err)
-	g.SetSeed(1)
 
-	expectedPasswords := []string{
-		"KkeonkPQHv4r",
-		"sHL31fveTcKB",
-		"MHnSCTtKBds2",
-		"oEqJBeZ8Qmie",
-		"G2CGWSDAQUuz",
-		"RtwGPgyAq9tN",
-		"3kPAu4cMxN8t",
-		"FgWWYrjqnx19",
-		"uCFmDFDAoLZY",
-		"pMgNoVa9z5Vv",
+	charsetMap := make(map[rune]bool)
+	for _, r := range charset.AlphaNumeric.WithoutAmbiguity().WithoutDuplicates() {
+		charsetMap[r] = true
 	}
-	var actualPasswords []string
+
 	for idx := 0; idx < 100; idx++ {
 		password := g.Generate()
 		assert.NotEmpty(t, password)
-		if idx < len(expectedPasswords) {
-			actualPasswords = append(actualPasswords, password)
-			assert.Equal(t, expectedPasswords[idx], password)
-		}
-	}
-	if !slices.Equal(expectedPasswords, actualPasswords) {
-		for _, pw := range actualPasswords {
-			fmt.Printf("%#v,\n", pw)
+		assert.Equal(t, 12, len(password), "password should be 12 characters long")
+		// Verify all characters are from the charset
+		for _, r := range password {
+			assert.True(t, charsetMap[r], "password contains invalid character: %c", r)
 		}
 	}
 }
@@ -55,40 +40,18 @@ func TestGenerator_Generate_WithAMixOfEverything(t *testing.T) {
 		WithNumSymbols(1, 1),
 	)
 	assert.Nil(t, err)
-	g.SetSeed(1)
 
-	expectedPasswords := []string{
-		"r*rnUqHeg5QP",
-		"m1RNe4@eXuda",
-		"tq@wKqhhTMAK",
-		"r1PkMr&qta2t",
-		"hsPv#wzGiChh",
-		"uth#CZeag1o7",
-		"FeFKFxxaf@cq",
-		"jxVK^1sRis6z",
-		"bVrPjBRC@bqy",
-		"f$orrWDzVYjx",
-	}
-	var actualPasswords []string
 	for idx := 0; idx < 100; idx++ {
 		password := g.Generate()
 		assert.NotEmpty(t, password)
-		if idx < len(expectedPasswords) {
-			actualPasswords = append(actualPasswords, password)
-			assert.Equal(t, expectedPasswords[idx], password)
-		}
+		assert.Equal(t, 12, len(password), "password should be 12 characters long")
 
 		numLowerCase := len(filterRunes([]rune(password), unicode.IsLower))
-		assert.True(t, numLowerCase >= 5, password)
+		assert.True(t, numLowerCase >= 5, "password: %s, lower case count: %d", password, numLowerCase)
 		numUpperCase := len(filterRunes([]rune(password), unicode.IsUpper))
-		assert.True(t, numUpperCase >= 2, password)
+		assert.True(t, numUpperCase >= 2, "password: %s, upper case count: %d", password, numUpperCase)
 		numSymbols := len(filterRunes([]rune(password), charset.Symbols.Contains))
-		assert.True(t, numSymbols == 1, password)
-	}
-	if !slices.Equal(expectedPasswords, actualPasswords) {
-		for _, pw := range actualPasswords {
-			fmt.Printf("%#v,\n", pw)
-		}
+		assert.True(t, numSymbols == 1, "password: %s, symbol count: %d", password, numSymbols)
 	}
 }
 
@@ -100,36 +63,14 @@ func TestGenerator_Generate_WithSymbols(t *testing.T) {
 			WithNumSymbols(0, 3),
 		)
 		assert.Nil(t, err)
-		g.SetSeed(1)
 
-		expectedPasswords := []string{
-			"435c33b31--d",
-			"a6d4--c12c#5",
-			"44c@c5$@acac",
-			"f-d32ab154-5",
-			"%5de2%6bd52e",
-			"@+26ab1$#65+",
-			"b%ccd!d-!414",
-			"$6e2b63f@4+@",
-			"!e4b+dda6$@2",
-			"2+4f-cc$ef64",
-		}
-		var actualPasswords []string
 		for idx := 0; idx < 100; idx++ {
 			password := g.Generate()
 			assert.NotEmpty(t, password)
-			if idx < len(expectedPasswords) {
-				actualPasswords = append(actualPasswords, password)
-				assert.Equal(t, expectedPasswords[idx], password)
-			}
+			assert.Equal(t, 12, len(password), "password should be 12 characters long")
 
 			numSymbols := getNumSymbols(password)
-			assert.True(t, numSymbols >= 0 && numSymbols <= 3, password)
-		}
-		if !slices.Equal(expectedPasswords, actualPasswords) {
-			for _, pw := range actualPasswords {
-				fmt.Printf("%#v,\n", pw)
-			}
+			assert.True(t, numSymbols >= 0 && numSymbols <= 3, "password: %s, symbol count: %d", password, numSymbols)
 		}
 	})
 
@@ -141,7 +82,6 @@ func TestGenerator_Generate_WithSymbols(t *testing.T) {
 				WithNumSymbols(x, 3),
 			)
 			assert.Nil(t, err)
-			g.SetSeed(1)
 
 			for idx := 0; idx < 100; idx++ {
 				password := g.Generate()
@@ -162,7 +102,6 @@ func TestGenerator_Generate_WithSymbols(t *testing.T) {
 				WithNumSymbols(x, x),
 			)
 			assert.Nil(t, err)
-			g.SetSeed(1)
 
 			for idx := 0; idx < 100; idx++ {
 				password := g.Generate()
@@ -180,7 +119,6 @@ func TestGenerator_numSymbolsToGenerate(t *testing.T) {
 		minSymbols: minSymbols,
 		maxSymbols: maxSymbols,
 	}
-	g.SetSeed(1)
 	for idx := 0; idx < 10000; idx++ {
 		numSymbols := g.numSymbolsToGenerate()
 		assert.True(t, numSymbols >= minSymbols, numSymbols)

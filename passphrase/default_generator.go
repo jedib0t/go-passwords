@@ -23,8 +23,3 @@ var (
 func Generate() string {
 	return defaultGenerator.Generate()
 }
-
-// SetSeed sets the seed value used by the RNG of the default Generator.
-func SetSeed(seed uint64) {
-	defaultGenerator.SetSeed(seed)
-}

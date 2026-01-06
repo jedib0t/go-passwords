@@ -1,14 +1,17 @@
 package passphrase
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestGenerate(t *testing.T) {
-	assert.NotEmpty(t, Generate())
+	passphrase := Generate()
+	assert.NotEmpty(t, passphrase)
 
-	SetSeed(1)
-	assert.Equal(t, "Duos-Limba6-Coddle", Generate())
+	// Verify structure: should have 3 words separated by "-"
+	words := strings.Split(passphrase, "-")
+	assert.Equal(t, 3, len(words), "passphrase should have 3 words: %s", passphrase)
 }
