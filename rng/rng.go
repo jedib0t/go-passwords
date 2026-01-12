@@ -45,14 +45,27 @@ func IntN(n int) (int, error) {
 // It uses batching to reduce mutex contention and stack-allocated buffers for
 // small requests to minimize heap allocations.
 func IntNs(n int, count int) ([]int, error) {
-	if n <= 1 {
-		return nil, ErrInvalidN
-	}
 	if count <= 0 {
 		return nil, nil
 	}
-
 	res := make([]int, count)
+	if err := FillIntNs(res, n); err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+// FillIntNs fills the provided slice with random integers in [0, n).
+// It uses batching to reduce mutex contention and stack-allocated buffers for
+// small requests to minimize additional heap allocations.
+func FillIntNs(buf []int, n int) error {
+	if n <= 1 {
+		return ErrInvalidN
+	}
+	count := len(buf)
+	if count <= 0 {
+		return nil
+	}
 
 	// For small n, use modulo directly as bias is negligible.
 	// We use a small stack buffer to avoid heap allocation for the temporary byte slice.
@@ -66,12 +79,12 @@ func IntNs(n int, count int) ([]int, error) {
 		}
 
 		if err := readBytesBuffered(b); err != nil {
-			return nil, err
+			return err
 		}
 		for i := 0; i < count; i++ {
-			res[i] = int(b[i]) % n
+			buf[i] = int(b[i]) % n
 		}
-		return res, nil
+		return nil
 	}
 
 	// For larger n, use rejection sampling to avoid modulo bias.
@@ -87,12 +100,12 @@ func IntNs(n int, count int) ([]int, error) {
 		}
 
 		if err := readBytesBuffered(b); err != nil {
-			return nil, err
+			return err
 		}
 		for i := 0; i < count; i++ {
-			res[i] = int(binary.BigEndian.Uint32(b[i*4:])) % n
+			buf[i] = int(binary.BigEndian.Uint32(b[i*4:])) % n
 		}
-		return res, nil
+		return nil
 	}
 
 	// Rejection sampling loop to ensure zero bias.
@@ -100,16 +113,16 @@ func IntNs(n int, count int) ([]int, error) {
 	for i := 0; i < count; i++ {
 		for {
 			if err := readBytesBuffered(b[:]); err != nil {
-				return nil, err
+				return err
 			}
 			val := binary.BigEndian.Uint32(b[:])
 			if val < max {
-				res[i] = int(val % uint32(n))
+				buf[i] = int(val % uint32(n))
 				break
 			}
 		}
 	}
-	return res, nil
+	return nil
 }
 
 // Shuffle shuffles the slice using Fisher-Yates algorithm with crypto/rand.

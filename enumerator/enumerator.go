@@ -41,16 +41,21 @@ type Enumerator interface {
 }
 
 type enumerator struct {
-	base           int
-	baseBigInt     *big.Int
-	charset        []rune
-	length         int
-	location       *big.Int
-	locationMax    *big.Int
-	mutex          sync.RWMutex
-	rollover       bool
-	value          []int
-	valueInCharset []rune
+	base        int
+	baseBigInt  *big.Int
+	charset     []rune
+	length      int
+	location    *big.Int
+	locationMax *big.Int
+	mutex       sync.RWMutex
+	rollover    bool
+	value       []int
+	isASCII     bool
+
+	// Optimization: uint64 fast-path
+	useUint64         bool
+	locationUint64    uint64
+	locationMaxUint64 uint64
 
 	// Optimization: lazy location computation
 	locationDirty bool
@@ -73,21 +78,37 @@ func New(cs charset.Charset, length int, opts ...Option) Enumerator {
 	maxValues := numValues(base, length)
 
 	o := &enumerator{
-		base:           base,
-		baseBigInt:     big.NewInt(int64(base)),
-		charset:        []rune(cs),
-		length:         length,
-		location:       big.NewInt(1),
-		locationMax:    new(big.Int).Set(maxValues),
-		value:          make([]int, length),
-		valueInCharset: make([]rune, length),
-		dividend:       new(big.Int),
-		remainder:      new(big.Int),
-		multiplier:     new(big.Int),
-		val:            new(big.Int),
-		locationDirty:  false,
-		stringDirty:    true, // Need to compute initial string
+		base:          base,
+		baseBigInt:    big.NewInt(int64(base)),
+		charset:       []rune(cs),
+		length:        length,
+		location:      big.NewInt(1),
+		locationMax:   new(big.Int).Set(maxValues),
+		value:         make([]int, length),
+		dividend:      new(big.Int),
+		remainder:     new(big.Int),
+		multiplier:    new(big.Int),
+		val:           new(big.Int),
+		locationDirty: false,
+		stringDirty:   true, // Need to compute initial string
 	}
+
+	// Detect if we can use uint64 fast-path
+	if maxValues.IsUint64() {
+		o.useUint64 = true
+		o.locationUint64 = 1
+		o.locationMaxUint64 = maxValues.Uint64()
+	}
+
+	// Check if charset is ASCII only for performance in String()
+	o.isASCII = true
+	for _, r := range o.charset {
+		if r > 127 {
+			o.isASCII = false
+			break
+		}
+	}
+
 	for _, opt := range opts {
 		opt(o)
 	}
@@ -98,8 +119,13 @@ func (o *enumerator) AtEnd() bool {
 	o.mutex.RLock()
 	defer o.mutex.RUnlock()
 
-	o.ensureLocation()
-	return o.location.Cmp(o.locationMax) >= 0
+	maxVal := o.base - 1
+	for idx := range o.value {
+		if o.value[idx] != maxVal {
+			return false
+		}
+	}
+	return true
 }
 
 func (o *enumerator) Decrement() bool {
@@ -122,10 +148,15 @@ func (o *enumerator) Decrement() bool {
 		return false
 	}
 
-	// Decrement value array directly (no location update needed)
+	// Decrement value array directly
 	for idx := o.length - 1; idx >= 0; idx-- {
 		if o.decrementAtIndex(idx) {
-			o.locationDirty = true
+			if !o.locationDirty {
+				if o.useUint64 {
+					o.locationUint64--
+				}
+				o.location.Sub(o.location, biOne)
+			}
 			o.stringDirty = true
 			return true
 		}
@@ -138,15 +169,33 @@ func (o *enumerator) DecrementN(n *big.Int) bool {
 	defer o.mutex.Unlock()
 
 	o.ensureLocation()
-	o.location.Sub(o.location, n)
-	if o.location.Cmp(biOne) < 0 { // less than min
-		if !o.rollover {
-			o.first()
-			return false
+	if o.useUint64 {
+		nUint64 := n.Uint64()
+		if o.locationUint64 > nUint64 {
+			o.locationUint64 -= nUint64
+		} else {
+			if !o.rollover {
+				o.first()
+				return false
+			}
+			// rollover
+			for o.locationUint64 <= nUint64 {
+				o.locationUint64 += o.locationMaxUint64
+			}
+			o.locationUint64 -= nUint64
 		}
-		// move backwards from max; o.location is currently -ve --> so Add()
-		for o.location.Cmp(biOne) < 0 {
-			o.location.Add(o.locationMax, o.location)
+		o.location.SetUint64(o.locationUint64)
+	} else {
+		o.location.Sub(o.location, n)
+		if o.location.Cmp(biOne) < 0 { // less than min
+			if !o.rollover {
+				o.first()
+				return false
+			}
+			// move backwards from max; o.location is currently -ve --> so Add()
+			for o.location.Cmp(biOne) < 0 {
+				o.location.Add(o.locationMax, o.location)
+			}
 		}
 	}
 	o.computeValue()
@@ -166,6 +215,9 @@ func (o *enumerator) Location() *big.Int {
 	defer o.mutex.RUnlock()
 
 	o.ensureLocation()
+	if o.useUint64 {
+		return new(big.Int).SetUint64(o.locationUint64)
+	}
 	return new(big.Int).Set(o.location)
 }
 
@@ -190,10 +242,15 @@ func (o *enumerator) Increment() bool {
 		return false
 	}
 
-	// Increment value array directly (no location update needed)
+	// Increment value array directly
 	for idx := o.length - 1; idx >= 0; idx-- {
 		if o.incrementAtIndex(idx) {
-			o.locationDirty = true
+			if !o.locationDirty {
+				if o.useUint64 {
+					o.locationUint64++
+				}
+				o.location.Add(o.location, biOne)
+			}
 			o.stringDirty = true
 			return true
 		}
@@ -206,15 +263,31 @@ func (o *enumerator) IncrementN(n *big.Int) bool {
 	defer o.mutex.Unlock()
 
 	o.ensureLocation()
-	o.location.Add(o.location, n)
-	if o.location.Cmp(o.locationMax) > 0 { // more than max
-		if !o.rollover {
-			o.last()
-			return false
+	if o.useUint64 {
+		nUint64 := n.Uint64()
+		o.locationUint64 += nUint64
+		if o.locationUint64 > o.locationMaxUint64 {
+			if !o.rollover {
+				o.last()
+				return false
+			}
+			// rollover
+			for o.locationUint64 > o.locationMaxUint64 {
+				o.locationUint64 -= o.locationMaxUint64
+			}
 		}
-		// move forwards from zero
-		for o.location.Cmp(o.locationMax) > 0 {
-			o.location.Sub(o.location, o.locationMax)
+		o.location.SetUint64(o.locationUint64)
+	} else {
+		o.location.Add(o.location, n)
+		if o.location.Cmp(o.locationMax) > 0 { // more than max
+			if !o.rollover {
+				o.last()
+				return false
+			}
+			// move forwards from zero
+			for o.location.Cmp(o.locationMax) > 0 {
+				o.location.Sub(o.location, o.locationMax)
+			}
 		}
 	}
 	o.computeValue()
@@ -233,11 +306,15 @@ func (o *enumerator) GoTo(n *big.Int) error {
 	o.mutex.Lock()
 	defer o.mutex.Unlock()
 
-	o.ensureLocation()
 	if n.Cmp(biOne) < 0 || n.Cmp(o.locationMax) > 0 {
 		return ErrInvalidLocation
 	}
-	o.location.Set(n)
+	if o.useUint64 {
+		o.locationUint64 = n.Uint64()
+		o.location.SetUint64(o.locationUint64)
+	} else {
+		o.location.Set(n)
+	}
 	o.computeValue()
 	o.locationDirty = false // location is now in sync with value
 	return nil
@@ -248,12 +325,21 @@ func (o *enumerator) String() string {
 	defer o.mutex.Unlock()
 
 	if o.stringDirty {
-		var b strings.Builder
-		b.Grow(o.length)
-		for idx := range o.value {
-			b.WriteRune(o.charset[o.value[idx]])
+		if o.isASCII {
+			// Fast path for ASCII charsets
+			b := make([]byte, o.length)
+			for idx := range o.value {
+				b[idx] = byte(o.charset[o.value[idx]])
+			}
+			o.cachedString = string(b)
+		} else {
+			var b strings.Builder
+			b.Grow(o.length)
+			for idx := range o.value {
+				b.WriteRune(o.charset[o.value[idx]])
+			}
+			o.cachedString = b.String()
 		}
-		o.cachedString = b.String()
 		o.stringDirty = false
 	}
 	return o.cachedString
@@ -264,17 +350,30 @@ func (o *enumerator) computeValue() {
 	// given base using continuous division and use all the remainders as the
 	// values
 
-	// Reuse pre-allocated big.Int objects instead of creating new ones
-	o.dividend.Sub(o.location, biOne)
-	valIdx := o.length - 1
-	// append every remainder until dividend becomes zero
-	for ; o.dividend.Cmp(biZero) != 0; valIdx-- {
-		o.dividend.QuoRem(o.dividend, o.baseBigInt, o.remainder)
-		o.value[valIdx] = int(o.remainder.Int64())
-	}
-	// left-pad the remaining characters with 0 (==> 0th char in charset)
-	for ; valIdx >= 0; valIdx-- {
-		o.value[valIdx] = 0
+	if o.useUint64 {
+		val := o.locationUint64 - 1
+		valIdx := o.length - 1
+		base := uint64(o.base)
+		for ; val != 0; valIdx-- {
+			o.value[valIdx] = int(val % base)
+			val /= base
+		}
+		for ; valIdx >= 0; valIdx-- {
+			o.value[valIdx] = 0
+		}
+	} else {
+		// Reuse pre-allocated big.Int objects instead of creating new ones
+		o.dividend.Sub(o.location, biOne)
+		valIdx := o.length - 1
+		// append every remainder until dividend becomes zero
+		for ; o.dividend.Cmp(biZero) != 0; valIdx-- {
+			o.dividend.QuoRem(o.dividend, o.baseBigInt, o.remainder)
+			o.value[valIdx] = int(o.remainder.Int64())
+		}
+		// left-pad the remaining characters with 0 (==> 0th char in charset)
+		for ; valIdx >= 0; valIdx-- {
+			o.value[valIdx] = 0
+		}
 	}
 	o.stringDirty = true
 }
@@ -294,6 +393,9 @@ func (o *enumerator) decrementAtIndex(idx int) bool {
 }
 
 func (o *enumerator) first() {
+	if o.useUint64 {
+		o.locationUint64 = 1
+	}
 	o.location.Set(biOne)
 	for idx := range o.value {
 		o.value[idx] = 0
@@ -317,6 +419,9 @@ func (o *enumerator) incrementAtIndex(idx int) bool {
 }
 
 func (o *enumerator) last() {
+	if o.useUint64 {
+		o.locationUint64 = o.locationMaxUint64
+	}
 	o.location.Set(o.locationMax)
 	for idx := range o.value {
 		o.value[idx] = o.base - 1
@@ -333,15 +438,28 @@ func (o *enumerator) ensureLocation() {
 
 	// Compute location from value array
 	// location = 1 + sum(value[i] * base^(length-1-i))
-	o.location.Set(biOne)
-	o.multiplier.SetInt64(1)
-	for idx := o.length - 1; idx >= 0; idx-- {
-		if o.value[idx] > 0 {
-			o.val.SetInt64(int64(o.value[idx]))
-			o.val.Mul(o.val, o.multiplier)
-			o.location.Add(o.location, o.val)
+	if o.useUint64 {
+		o.locationUint64 = 1
+		multiplier := uint64(1)
+		base := uint64(o.base)
+		for idx := o.length - 1; idx >= 0; idx-- {
+			if o.value[idx] > 0 {
+				o.locationUint64 += uint64(o.value[idx]) * multiplier
+			}
+			multiplier *= base
 		}
-		o.multiplier.Mul(o.multiplier, o.baseBigInt)
+		o.location.SetUint64(o.locationUint64)
+	} else {
+		o.location.Set(biOne)
+		o.multiplier.SetInt64(1)
+		for idx := o.length - 1; idx >= 0; idx-- {
+			if o.value[idx] > 0 {
+				o.val.SetInt64(int64(o.value[idx]))
+				o.val.Mul(o.val, o.multiplier)
+				o.location.Add(o.location, o.val)
+			}
+			o.multiplier.Mul(o.multiplier, o.baseBigInt)
+		}
 	}
 	o.locationDirty = false
 }
