@@ -81,20 +81,26 @@ func (g *generator) GenerateTo(buf []byte) (int, error) {
 	// use the pool to get a []rune for working on
 	passwordPtr := g.pool.Get().(*[]rune)
 	defer g.pool.Put(passwordPtr)
-	password := *passwordPtr
+	password := (*passwordPtr)[:g.numChars]
 
 	// fill it with minimum requirements first
 	idx := 0
-	if err := g.fill(password, g.charsetCaseLower, g.minLowerCase, &idx); err != nil {
-		return 0, err
+	if g.minLowerCase > 0 {
+		if err := g.fill(password, g.charsetCaseLower, g.minLowerCase, &idx); err != nil {
+			return 0, err
+		}
 	}
-	if err := g.fill(password, g.charsetCaseUpper, g.minUpperCase, &idx); err != nil {
-		return 0, err
+	if g.minUpperCase > 0 {
+		if err := g.fill(password, g.charsetCaseUpper, g.minUpperCase, &idx); err != nil {
+			return 0, err
+		}
 	}
 	if numSymbols, err := g.numSymbolsToGenerate(); err != nil {
 		return 0, err
-	} else if err := g.fill(password, g.charsetSymbols, numSymbols, &idx); err != nil {
-		return 0, err
+	} else if numSymbols > 0 {
+		if err := g.fill(password, g.charsetSymbols, numSymbols, &idx); err != nil {
+			return 0, err
+		}
 	}
 	if remainingChars := len(password) - idx; remainingChars > 0 {
 		if err := g.fill(password, g.charsetNonSymbols, remainingChars, &idx); err != nil {
@@ -112,11 +118,12 @@ func (g *generator) GenerateTo(buf []byte) (int, error) {
 }
 
 func (g *generator) fill(password []rune, runes []rune, count int, idx *int) error {
-	for ; *idx < len(password) && count > 0; count-- {
-		n, err := rng.IntN(len(runes))
-		if err != nil {
-			return fmt.Errorf("failed to generate random number: %w", err)
-		}
+	indices, err := rng.IntNs(len(runes), count)
+	if err != nil {
+		return fmt.Errorf("failed to generate random numbers: %w", err)
+	}
+
+	for _, n := range indices {
 		password[*idx] = runes[n]
 		(*idx)++
 	}

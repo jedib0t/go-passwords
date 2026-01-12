@@ -155,11 +155,11 @@ Benchmarked on AMD Ryzen 9 9950X3D:
 | **Enumerator** | String | ~16 ns/op | 0 B/op, 0 allocs/op |
 | **Passphrase** | Generate | ~98 ns/op | 24 B/op, 1 allocs/op |
 | **Passphrase** | GenerateTo | ~87 ns/op | 0 B/op, 0 allocs/op |
-| **Password** | Generate | ~322 ns/op | 64 B/op, 2 allocs/op |
-| **Password** | GenerateTo | ~292 ns/op | 0 B/op, 0 allocs/op |
-| **RNG** | IntN | ~12 ns/op | 0 B/op, 0 allocs/op |
-| **RNG** | Shuffle (Small) | ~108 ns/op | 0 B/op, 0 allocs/op |
-| **RNG** | Shuffle (Medium) | ~1190 ns/op | 0 B/op, 0 allocs/op |
-| **RNG** | Shuffle (Large) | ~16022 ns/op | 0 B/op, 0 allocs/op |
+| **Password** | Generate | ~143 ns/op | 64 B/op, 2 allocs/op |
+| **Password** | GenerateTo | ~122 ns/op | 0 B/op, 0 allocs/op |
+| **RNG** | IntN | ~13 ns/op | 0 B/op, 0 allocs/op |
+| **RNG** | Shuffle (Small) | ~38 ns/op | 0 B/op, 0 allocs/op |
+| **RNG** | Shuffle (Medium) | ~354 ns/op | 0 B/op, 0 allocs/op |
+| **RNG** | Shuffle (Large) | ~16262 ns/op | 0 B/op, 0 allocs/op |
 
 Run benchmarks: `make bench`
