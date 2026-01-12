@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sync"
 	"unicode"
+	"unicode/utf8"
 
 	"github.com/jedib0t/go-passwords/charset"
 	"github.com/jedib0t/go-passwords/rng"
@@ -18,6 +19,9 @@ var (
 type Generator interface {
 	// Generate returns a randomly generated password.
 	Generate() (string, error)
+	// GenerateTo generates a password and writes it to the provided buffer.
+	// It returns the number of bytes written or an error.
+	GenerateTo(buf []byte) (int, error)
 }
 
 type generator struct {
@@ -51,11 +55,13 @@ func NewGenerator(rules ...Rule) (Generator, error) {
 	// create a storage pool with enough objects to support enough parallelism
 	g.pool = &sync.Pool{
 		New: func() any {
-			return make([]rune, g.numChars)
+			r := make([]rune, g.numChars)
+			return &r
 		},
 	}
 	for idx := 0; idx < storagePoolMinSize; idx++ {
-		g.pool.Put(make([]rune, g.numChars))
+		r := make([]rune, g.numChars)
+		g.pool.Put(&r)
 	}
 
 	return g.sanitize()
@@ -63,57 +69,69 @@ func NewGenerator(rules ...Rule) (Generator, error) {
 
 // Generate returns a randomly generated password.
 func (g *generator) Generate() (string, error) {
-	// use the pool to get a []rune for working on
-	password := g.pool.Get().([]rune)
-	defer g.pool.Put(password)
-
-	// init the filler
-	idx := 0
-	fillPassword := func(runes []rune, count int) error {
-		for ; idx < len(password) && count > 0; count-- {
-			n, err := rng.IntN(len(runes))
-			if err != nil {
-				return fmt.Errorf("failed to generate random number: %w", err)
-			}
-			password[idx] = runes[n]
-			idx++
-		}
-		return nil
+	buf := make([]byte, g.numChars*utf8.UTFMax)
+	n, err := g.GenerateTo(buf)
+	if err != nil {
+		return "", err
 	}
+	return string(buf[:n]), nil
+}
+
+func (g *generator) GenerateTo(buf []byte) (int, error) {
+	// use the pool to get a []rune for working on
+	passwordPtr := g.pool.Get().(*[]rune)
+	defer g.pool.Put(passwordPtr)
+	password := *passwordPtr
 
 	// fill it with minimum requirements first
-	if g.minLowerCase > 0 {
-		if err := fillPassword(g.charsetCaseLower, g.minLowerCase); err != nil {
-			return "", err
-		}
+	idx := 0
+	if err := g.fill(password, g.charsetCaseLower, g.minLowerCase, &idx); err != nil {
+		return 0, err
 	}
-	// fill the minimum upper case characters
-	if g.minUpperCase > 0 {
-		if err := fillPassword(g.charsetCaseUpper, g.minUpperCase); err != nil {
-			return "", err
-		}
+	if err := g.fill(password, g.charsetCaseUpper, g.minUpperCase, &idx); err != nil {
+		return 0, err
 	}
-	// fill the minimum symbols
 	if numSymbols, err := g.numSymbolsToGenerate(); err != nil {
-		return "", fmt.Errorf("failed to generate number of symbols: %w", err)
-	} else if numSymbols > 0 {
-		if err := fillPassword(g.charsetSymbols, numSymbols); err != nil {
-			return "", err
-		}
+		return 0, err
+	} else if err := g.fill(password, g.charsetSymbols, numSymbols, &idx); err != nil {
+		return 0, err
 	}
-	// fill the rest with non-symbols (as symbols has a max)
 	if remainingChars := len(password) - idx; remainingChars > 0 {
-		if err := fillPassword(g.charsetNonSymbols, remainingChars); err != nil {
-			return "", err
+		if err := g.fill(password, g.charsetNonSymbols, remainingChars, &idx); err != nil {
+			return 0, err
 		}
 	}
 
 	// shuffle it all
 	if err := rng.Shuffle(password); err != nil {
-		return "", fmt.Errorf("failed to shuffle password: %w", err)
+		return 0, fmt.Errorf("failed to shuffle password: %w", err)
 	}
 
-	return string(password), nil
+	// write to the buffer
+	return g.writeToBuf(password, buf)
+}
+
+func (g *generator) fill(password []rune, runes []rune, count int, idx *int) error {
+	for ; *idx < len(password) && count > 0; count-- {
+		n, err := rng.IntN(len(runes))
+		if err != nil {
+			return fmt.Errorf("failed to generate random number: %w", err)
+		}
+		password[*idx] = runes[n]
+		(*idx)++
+	}
+	return nil
+}
+
+func (g *generator) writeToBuf(password []rune, buf []byte) (int, error) {
+	offset := 0
+	for _, r := range password {
+		if offset+utf8.RuneLen(r) > len(buf) {
+			return 0, ErrBufferTooSmall
+		}
+		offset += utf8.EncodeRune(buf[offset:], r)
+	}
+	return offset, nil
 }
 
 func (g *generator) numSymbolsToGenerate() (int, error) {

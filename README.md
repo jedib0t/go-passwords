@@ -18,6 +18,7 @@ Passphrases combine 2+ words with separators, optionally capitalized and with nu
 - Optional random number insertion
 - Custom separators
 - Word length filtering
+- **Zero-allocation** via `GenerateTo([]byte)`
 
 ### Example
 ```golang
@@ -66,6 +67,7 @@ Generate cryptographically secure random passwords with fine-grained character r
 - Minimum lower-case character requirements
 - Minimum upper-case character requirements
 - Symbol count range (min/max)
+- **Zero-allocation** via `GenerateTo([]byte)`
 
 ### Example
 ```golang
@@ -151,11 +153,13 @@ Benchmarked on AMD Ryzen 9 9950X3D:
 | **Enumerator** | Increment/Decrement | ~17 ns/op | 0 B/op, 0 allocs/op |
 | **Enumerator** | IncrementN/DecrementN | ~104 ns/op | 0 B/op, 0 allocs/op |
 | **Enumerator** | String | ~16 ns/op | 0 B/op, 0 allocs/op |
-| **Passphrase** | Generate | ~133 ns/op | 47 B/op, 2 allocs/op |
-| **Password** | Generate | ~345 ns/op | 40 B/op, 2 allocs/op |
-| **RNG** | IntN | ~17 ns/op | 0 B/op, 0 allocs/op |
-| **RNG** | Shuffle (Small) | ~112 ns/op | 0 B/op, 0 allocs/op |
-| **RNG** | Shuffle (Medium) | ~1200 ns/op | 0 B/op, 0 allocs/op |
-| **RNG** | Shuffle (Large) | ~16100 ns/op | 0 B/op, 0 allocs/op |
+| **Passphrase** | Generate | ~98 ns/op | 24 B/op, 1 allocs/op |
+| **Passphrase** | GenerateTo | ~87 ns/op | 0 B/op, 0 allocs/op |
+| **Password** | Generate | ~322 ns/op | 64 B/op, 2 allocs/op |
+| **Password** | GenerateTo | ~292 ns/op | 0 B/op, 0 allocs/op |
+| **RNG** | IntN | ~12 ns/op | 0 B/op, 0 allocs/op |
+| **RNG** | Shuffle (Small) | ~108 ns/op | 0 B/op, 0 allocs/op |
+| **RNG** | Shuffle (Medium) | ~1190 ns/op | 0 B/op, 0 allocs/op |
+| **RNG** | Shuffle (Large) | ~16022 ns/op | 0 B/op, 0 allocs/op |
 
 Run benchmarks: `make bench`
