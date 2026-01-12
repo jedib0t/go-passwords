@@ -82,3 +82,11 @@ func BenchmarkEnumerator_String(b *testing.B) {
 		_ = o.String()
 	}
 }
+
+func BenchmarkEnumerator_AtEnd(b *testing.B) {
+	o := New(charset.Numbers, 12)
+
+	for i := 0; i < b.N; i++ {
+		_ = o.AtEnd()
+	}
+}

@@ -118,8 +118,15 @@ func (g *generator) GenerateTo(buf []byte) (int, error) {
 }
 
 func (g *generator) fill(password []rune, runes []rune, count int, idx *int) error {
-	indices, err := rng.IntNs(len(runes), count)
-	if err != nil {
+	var stackBuf [64]int
+	var indices []int = stackBuf[:]
+	if count > len(stackBuf) {
+		indices = make([]int, count)
+	} else {
+		indices = indices[:count]
+	}
+
+	if err := rng.FillIntNs(indices, len(runes)); err != nil {
 		return fmt.Errorf("failed to generate random numbers: %w", err)
 	}
 
