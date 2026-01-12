@@ -23,19 +23,24 @@ var (
 // readBytesBuffered reads the requested number of bytes from the buffered crypto/rand.
 // It automatically refills the buffer when needed.
 func readBytesBuffered(b []byte) error {
+	needed := len(b)
+
+	// For large requests, skip the buffer and read directly
+	if needed > bufferSize/2 {
+		_, err := rand.Read(b)
+		return err
+	}
+
 	randMutex.Lock()
 	defer randMutex.Unlock()
 
-	needed := len(b)
 	available := bufferSize - randPos
-
 	if available < needed {
 		// Not enough bytes in buffer, refill it
 		if _, err := rand.Read(randBuffer[:]); err != nil {
 			return err
 		}
 		randPos = 0
-		available = bufferSize
 	}
 
 	// Copy bytes from buffer
