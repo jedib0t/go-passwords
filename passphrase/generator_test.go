@@ -68,3 +68,33 @@ func TestNewGenerator_DoesNotMutateCallerDictionary(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, original, words, "caller's dictionary slice must not be modified")
 }
+
+func TestGenerator_Generate_CapitalizationGrowsWordBytes(t *testing.T) {
+	// regression test: 'ɐ' (U+0250, 2 bytes) capitalizes to 'Ɐ' (U+2C6F,
+	// 3 bytes), so a word can exceed the word-length rule's byte limit after
+	// capitalization; Generate used to size its buffer from the rule and
+	// fail with ErrBufferTooSmall
+	words := make([]string, 0, 300)
+	for c1 := 'a'; c1 <= 'z'; c1++ {
+		for c2 := 'a'; c2 <= 'z'; c2++ {
+			words = append(words, "ɐ"+string(c1)+string(c2)+"def")
+		}
+	}
+
+	g, err := NewGenerator(
+		WithDictionary(words),
+		WithCapitalizedWords(true),
+		WithNumWords(3),
+		WithNumber(true),
+		WithSeparator("-"),
+		WithWordLength(4, 7),
+	)
+	assert.NotNil(t, g)
+	assert.Nil(t, err)
+
+	for i := 0; i < 50; i++ {
+		phrase, err := g.Generate()
+		assert.NoError(t, err)
+		assert.NotEmpty(t, phrase)
+	}
+}

@@ -26,6 +26,7 @@ type generator struct {
 	capitalize    bool
 	dictionary    []string
 	dictionaryLen int
+	maxWordBytes  int
 	separator     string
 	numWords      int
 	withNumber    bool
@@ -45,8 +46,10 @@ func NewGenerator(rules ...Rule) (Generator, error) {
 
 // Generate returns a randomly generated password.
 func (g *generator) Generate() (string, error) {
-	// estimate the capacity needed: max word length * num words + separators + digit
-	buf := make([]byte, g.wordLenMax*g.numWords+len(g.separator)*(g.numWords-1)+1)
+	// capacity needed: longest dictionary word * num words + separators +
+	// digit; maxWordBytes is measured after capitalization, which can change
+	// a word's byte length for non-ASCII dictionaries
+	buf := make([]byte, g.maxWordBytes*g.numWords+len(g.separator)*(g.numWords-1)+1)
 	n, err := g.GenerateTo(buf)
 	if err != nil {
 		return "", err
@@ -162,6 +165,16 @@ func (g *generator) sanitize() (Generator, error) {
 			if r != utf8.RuneError {
 				g.dictionary[idx] = string(unicode.ToUpper(r)) + g.dictionary[idx][size:]
 			}
+		}
+	}
+
+	// record the longest word in bytes after capitalization; ToUpper can
+	// change a rune's UTF-8 length, so the word-length rule alone could
+	// under-estimate the buffer Generate needs
+	g.maxWordBytes = 0
+	for _, word := range g.dictionary {
+		if len(word) > g.maxWordBytes {
+			g.maxWordBytes = len(word)
 		}
 	}
 
