@@ -2,7 +2,7 @@ package passphrase
 
 import "github.com/jedib0t/go-passwords/passphrase/dictionaries"
 
-// Rule controls how the Generator/Sequencer generates passwords.
+// Rule controls how the Generator generates passwords.
 type Rule func(g *generator)
 
 var (

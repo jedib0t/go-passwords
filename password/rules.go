@@ -2,7 +2,7 @@ package password
 
 import "github.com/jedib0t/go-passwords/charset"
 
-// Rule controls how the Generator/Sequencer generates passwords.
+// Rule controls how the Generator generates passwords.
 type Rule func(g *generator)
 
 var (
@@ -12,7 +12,7 @@ var (
 	}
 )
 
-// WithCharset sets the Charset the Generator/Sequencer can use.
+// WithCharset sets the Charset the Generator can use.
 func WithCharset(c charset.Charset) Rule {
 	return func(g *generator) {
 		g.charset = []rune(c)
@@ -28,8 +28,6 @@ func WithLength(l int) Rule {
 
 // WithMinLowerCase controls the minimum number of lower case characters that
 // can appear in the password.
-//
-// Note: This works only on a Generator and is ineffective with a Sequencer.
 func WithMinLowerCase(min int) Rule {
 	return func(g *generator) {
 		g.minLowerCase = min
@@ -38,8 +36,6 @@ func WithMinLowerCase(min int) Rule {
 
 // WithMinUpperCase controls the minimum number of upper case characters that
 // can appear in the password.
-//
-// Note: This works only on a Generator and is ineffective with a Sequencer.
 func WithMinUpperCase(min int) Rule {
 	return func(g *generator) {
 		g.minUpperCase = min
@@ -49,8 +45,6 @@ func WithMinUpperCase(min int) Rule {
 // WithNumSymbols controls the min/max number of symbols that can appear in the
 // password. When this rule is not used, symbols in the charset are treated
 // like any other character and may appear any number of times.
-//
-// Note: This works only on a Generator and is ineffective with a Sequencer.
 func WithNumSymbols(min, max int) Rule {
 	// sanitize min and max
 	if min < 0 {
