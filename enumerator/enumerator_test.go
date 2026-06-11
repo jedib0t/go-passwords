@@ -428,3 +428,42 @@ func TestEnumerator_Increment_AllPaths(t *testing.T) {
 	assert.True(t, ok)
 	assert.Equal(t, "100", o.String())
 }
+
+func TestEnumerator_IncrementN_DecrementN_HugeN(t *testing.T) {
+	// regression test: rollover used to be implemented as repeated
+	// addition/subtraction of locationMax, which takes O(n/max) iterations;
+	// with n ~ 2^62 and max = 100 that meant ~4.6e16 loop turns. The modular
+	// implementation must answer instantly and land on the right location.
+	huge := new(big.Int).Lsh(big.NewInt(1), 62) // 2^62
+
+	t.Run("increment with rollover", func(t *testing.T) {
+		o := New(charset.Numbers, 2, WithRolloverEnabled(true))
+		ok := o.IncrementN(huge)
+		assert.True(t, ok)
+		// (2^62) mod 100 = 4611686018427387904 mod 100 = 4 --> location 5
+		assert.Equal(t, "5", o.Location().String())
+	})
+
+	t.Run("decrement with rollover", func(t *testing.T) {
+		o := New(charset.Numbers, 2, WithRolloverEnabled(true))
+		ok := o.DecrementN(huge)
+		assert.True(t, ok)
+		// (0 - 2^62) mod 100 = 96 --> location 97
+		assert.Equal(t, "97", o.Location().String())
+	})
+
+	t.Run("increment without rollover saturates", func(t *testing.T) {
+		o := New(charset.Numbers, 2)
+		ok := o.IncrementN(huge)
+		assert.False(t, ok)
+		assert.Equal(t, "100", o.Location().String())
+	})
+
+	t.Run("decrement without rollover saturates", func(t *testing.T) {
+		o := New(charset.Numbers, 2)
+		o.Last()
+		ok := o.DecrementN(huge)
+		assert.False(t, ok)
+		assert.Equal(t, "1", o.Location().String())
+	})
+}

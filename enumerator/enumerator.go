@@ -171,18 +171,24 @@ func (o *enumerator) DecrementN(n *big.Int) bool {
 	o.ensureLocation()
 	if o.useUint64 {
 		nUint64 := n.Uint64()
-		if o.locationUint64 > nUint64 {
-			o.locationUint64 -= nUint64
-		} else {
-			if !o.rollover {
+		maxUint64 := o.locationMaxUint64
+		if !o.rollover {
+			if nUint64 >= o.locationUint64 {
 				o.first()
 				return false
 			}
-			// rollover
-			for o.locationUint64 <= nUint64 {
-				o.locationUint64 += o.locationMaxUint64
-			}
 			o.locationUint64 -= nUint64
+		} else {
+			// modular arithmetic on the 0-based location; reducing n first
+			// keeps every intermediate value below max and avoids both
+			// unbounded loops and uint64 overflow
+			nUint64 %= maxUint64
+			loc0 := o.locationUint64 - 1
+			if nUint64 > loc0 {
+				o.locationUint64 = maxUint64 - (nUint64 - loc0) + 1
+			} else {
+				o.locationUint64 = loc0 - nUint64 + 1
+			}
 		}
 		o.location.SetUint64(o.locationUint64)
 	} else {
@@ -192,10 +198,11 @@ func (o *enumerator) DecrementN(n *big.Int) bool {
 				o.first()
 				return false
 			}
-			// move backwards from max; o.location is currently -ve --> so Add()
-			for o.location.Cmp(biOne) < 0 {
-				o.location.Add(o.locationMax, o.location)
-			}
+			// wrap into [1, max]: reduce the 0-based location modulo max
+			// (big.Int.Mod is Euclidean, so the result is non-negative)
+			o.location.Sub(o.location, biOne)
+			o.location.Mod(o.location, o.locationMax)
+			o.location.Add(o.location, biOne)
 		}
 	}
 	o.computeValue()
@@ -265,16 +272,25 @@ func (o *enumerator) IncrementN(n *big.Int) bool {
 	o.ensureLocation()
 	if o.useUint64 {
 		nUint64 := n.Uint64()
-		o.locationUint64 += nUint64
-		if o.locationUint64 > o.locationMaxUint64 {
-			if !o.rollover {
+		maxUint64 := o.locationMaxUint64
+		if !o.rollover {
+			if nUint64 > maxUint64-o.locationUint64 {
 				o.last()
 				return false
 			}
-			// rollover
-			for o.locationUint64 > o.locationMaxUint64 {
-				o.locationUint64 -= o.locationMaxUint64
+			o.locationUint64 += nUint64
+		} else {
+			// modular arithmetic on the 0-based location; the reduced sum can
+			// still wrap around uint64 when max is close to 2^64, which the
+			// sum < loc0 check detects, and the unsigned subtraction then
+			// yields the correct wrapped value
+			nUint64 %= maxUint64
+			loc0 := o.locationUint64 - 1
+			sum := loc0 + nUint64
+			if sum < loc0 || sum >= maxUint64 {
+				sum -= maxUint64
 			}
+			o.locationUint64 = sum + 1
 		}
 		o.location.SetUint64(o.locationUint64)
 	} else {
@@ -284,10 +300,10 @@ func (o *enumerator) IncrementN(n *big.Int) bool {
 				o.last()
 				return false
 			}
-			// move forwards from zero
-			for o.location.Cmp(o.locationMax) > 0 {
-				o.location.Sub(o.location, o.locationMax)
-			}
+			// wrap into [1, max]: reduce the 0-based location modulo max
+			o.location.Sub(o.location, biOne)
+			o.location.Mod(o.location, o.locationMax)
+			o.location.Add(o.location, biOne)
 		}
 	}
 	o.computeValue()
