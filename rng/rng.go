@@ -149,24 +149,41 @@ func FillIntNs(buf []int, n int) error {
 }
 
 // Shuffle shuffles the slice using Fisher-Yates algorithm with crypto/rand.
-// For slices smaller than 256, it uses a batch of random bytes to avoid
-// repeated RNG calls and mutex overhead.
+// For slices smaller than 256, it uses batches of random bytes to avoid
+// repeated RNG calls and mutex overhead. Each swap index is drawn with
+// rejection sampling so that every permutation is equally likely.
 func Shuffle[T any](slice []T) error {
 	n := len(slice)
 	if n <= 1 {
 		return nil
 	}
 
-	// For small slices, batch the random bytes for all swaps (one byte per swap).
+	// For small slices, batch the random bytes for the swaps and reject the
+	// bytes that would introduce modulo bias for the current swap range.
 	if n <= 256 {
-		var stackBuf [256]byte
-		b := stackBuf[:n-1]
-		if err := readBytesBuffered(b); err != nil {
-			return err
-		}
+		var stackBuf [128]byte
+		var avail []byte
 		for i := n - 1; i > 0; i-- {
-			j := int(b[n-1-i]) % (i + 1)
-			slice[i], slice[j] = slice[j], slice[i]
+			limit := byteLimit(i + 1)
+			for {
+				if len(avail) == 0 {
+					req := i + i/2 + 8 // remaining swaps, oversampled for rejections
+					if req > len(stackBuf) {
+						req = len(stackBuf)
+					}
+					if err := readBytesBuffered(stackBuf[:req]); err != nil {
+						return err
+					}
+					avail = stackBuf[:req]
+				}
+				by := avail[0]
+				avail = avail[1:]
+				if int(by) < limit {
+					j := int(by) % (i + 1)
+					slice[i], slice[j] = slice[j], slice[i]
+					break
+				}
+			}
 		}
 		return nil
 	}
