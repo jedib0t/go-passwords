@@ -57,6 +57,18 @@ Passphrase # 10: "Mirks6-Woofer-Lase"
 </pre>
 </details>
 
+### Entropy
+
+Passphrase strength comes almost entirely from the dictionary size and word
+count. The built-in English dictionary contains ~50,000 words of 4-7 letters,
+so each word contributes ~15.6 bits; the words in a phrase are unique, and the
+optional digit adds ~5 bits. With the default 3 words that is **~52 bits** —
+fine for passphrases a human memorizes (and rate-limited logins), but below
+the ~80 bits usually recommended for machine secrets. Use `WithNumWords(5)`
+(~83 bits) or more for high-value secrets, and remember that a smaller custom
+dictionary or tighter `WithWordLength` bounds reduces entropy: with 256 words,
+each word contributes only 8 bits.
+
 ## Passwords
 
 Generate cryptographically secure random passwords with fine-grained character requirements.
