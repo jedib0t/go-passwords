@@ -27,16 +27,22 @@ func WithLength(l int) Rule {
 }
 
 // WithMinLowerCase controls the minimum number of lower case characters that
-// can appear in the password.
+// can appear in the password. Negative values are treated as 0.
 func WithMinLowerCase(min int) Rule {
+	if min < 0 {
+		min = 0
+	}
 	return func(g *generator) {
 		g.minLowerCase = min
 	}
 }
 
 // WithMinUpperCase controls the minimum number of upper case characters that
-// can appear in the password.
+// can appear in the password. Negative values are treated as 0.
 func WithMinUpperCase(min int) Rule {
+	if min < 0 {
+		min = 0
+	}
 	return func(g *generator) {
 		g.minUpperCase = min
 	}

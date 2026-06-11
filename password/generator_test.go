@@ -387,3 +387,23 @@ func TestGenerator_Generate_SymbolQuotaWithoutSymbolsInCharset(t *testing.T) {
 		assert.Equal(t, 0, getNumSymbols(pw))
 	}
 }
+
+func TestGenerator_Generate_NegativeMinimums(t *testing.T) {
+	// regression test (found by FuzzNewGenerator): negative minimums used to
+	// inflate the space available for symbols and overrun the working buffer
+	g, err := NewGenerator(
+		WithCharset(charset.Charset("ab!@#$%^&*")),
+		WithLength(4),
+		WithMinLowerCase(-83),
+		WithMinUpperCase(-6),
+		WithNumSymbols(4, 11),
+	)
+	assert.NotNil(t, g)
+	assert.Nil(t, err)
+
+	for i := 0; i < 200; i++ {
+		pw, err := g.Generate()
+		assert.NoError(t, err)
+		assert.Equal(t, 4, len(pw))
+	}
+}
