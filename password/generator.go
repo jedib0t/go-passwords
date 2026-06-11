@@ -172,33 +172,8 @@ func (g *generator) numSymbolsToGenerate() (int, error) {
 }
 
 func (g *generator) sanitize() (Generator, error) {
-	// validate the inputs
-	if len(g.charset) == 0 {
-		return nil, ErrEmptyCharset
-	}
-	if g.numChars <= 0 {
-		return nil, ErrZeroLenPassword
-	}
-	if g.minLowerCase > 0 && len(g.charsetCaseLower) == 0 {
-		return nil, ErrNoLowerCaseInCharset
-	}
-	if g.minLowerCase > g.numChars {
-		return nil, ErrMinLowerCaseTooLong
-	}
-	if g.minUpperCase > 0 && len(g.charsetCaseUpper) == 0 {
-		return nil, ErrNoUpperCaseInCharset
-	}
-	if g.minUpperCase > g.numChars {
-		return nil, ErrMinUpperCaseTooLong
-	}
-	if g.minSymbols > 0 && len(g.charsetSymbols) == 0 {
-		return nil, ErrNoSymbolsInCharset
-	}
-	if g.minSymbols > g.numChars {
-		return nil, ErrMinSymbolsTooLong
-	}
-	if g.minLowerCase+g.minUpperCase+g.minSymbols > g.numChars {
-		return nil, ErrRequirementsNotMet
+	if err := g.validateRules(); err != nil {
+		return nil, err
 	}
 	// clamp maxSymbols to the space left over after the other minimums;
 	// without this, numSymbolsToGenerate can exceed the password length and
@@ -207,6 +182,58 @@ func (g *generator) sanitize() (Generator, error) {
 		g.maxSymbols = maxFit
 	}
 	return g, nil
+}
+
+func (g *generator) validateRules() error {
+	if len(g.charset) == 0 {
+		return ErrEmptyCharset
+	}
+	if g.numChars <= 0 {
+		return ErrZeroLenPassword
+	}
+	if err := g.validateCaseRules(); err != nil {
+		return err
+	}
+	if err := g.validateSymbolRules(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (g *generator) validateCaseRules() error {
+	if g.minLowerCase > 0 && len(g.charsetCaseLower) == 0 {
+		return ErrNoLowerCaseInCharset
+	}
+	if g.minLowerCase > g.numChars {
+		return ErrMinLowerCaseTooLong
+	}
+	if g.minUpperCase > 0 && len(g.charsetCaseUpper) == 0 {
+		return ErrNoUpperCaseInCharset
+	}
+	if g.minUpperCase > g.numChars {
+		return ErrMinUpperCaseTooLong
+	}
+	return nil
+}
+
+func (g *generator) validateSymbolRules() error {
+	if g.minSymbols > 0 && len(g.charsetSymbols) == 0 {
+		return ErrNoSymbolsInCharset
+	}
+	if g.minSymbols > g.numChars {
+		return ErrMinSymbolsTooLong
+	}
+	if g.minLowerCase+g.minUpperCase+g.minSymbols > g.numChars {
+		return ErrRequirementsNotMet
+	}
+	// when WithNumSymbols was configured, any characters beyond the drawn
+	// symbol count are filled from the non-symbol charset; reject configs
+	// that may need such fillers but have none available
+	if g.symbolsConfigured && len(g.charsetNonSymbols) == 0 &&
+		g.minLowerCase+g.minUpperCase+g.minSymbols < g.numChars {
+		return ErrNoNonSymbolsInCharset
+	}
+	return nil
 }
 
 func filterRunes(runes []rune, truth func(r rune) bool) []rune {

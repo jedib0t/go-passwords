@@ -343,3 +343,28 @@ func TestGenerator_Generate_SymbolsWithoutNumSymbolsRule(t *testing.T) {
 	}
 	assert.True(t, sawSymbol, "expected at least one symbol across 200 default-rule passwords")
 }
+
+func TestNewGenerator_AllSymbolCharsetNeedsFillers(t *testing.T) {
+	// regression test: an all-symbol charset with a symbol quota below the
+	// password length used to pass sanitize() and then fail every Generate()
+	// call, since the remaining positions are filled from non-symbols
+	g, err := NewGenerator(
+		WithCharset(charset.Symbols),
+		WithLength(4),
+		WithNumSymbols(1, 1),
+	)
+	assert.Nil(t, g)
+	assert.Equal(t, ErrNoNonSymbolsInCharset, err)
+
+	// an all-symbol charset that is fully covered by the symbol quota is fine
+	g, err = NewGenerator(
+		WithCharset(charset.Symbols),
+		WithLength(4),
+		WithNumSymbols(4, 4),
+	)
+	assert.NotNil(t, g)
+	assert.Nil(t, err)
+	pw, err := g.Generate()
+	assert.NoError(t, err)
+	assert.Equal(t, 4, len(pw))
+}
