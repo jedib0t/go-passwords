@@ -59,14 +59,9 @@ type enumerator struct {
 	locationUint64    uint64
 	locationMaxUint64 uint64
 
-	// Optimization: lazy location computation
-	locationDirty bool
-
-	// Optimization: reusable big.Int objects for computeValue and ensureLocation
-	dividend   *big.Int
-	remainder  *big.Int
-	multiplier *big.Int
-	val        *big.Int
+	// Optimization: reusable big.Int objects for computeValue
+	dividend  *big.Int
+	remainder *big.Int
 
 	// Optimization: cached string result
 	cachedString string
@@ -88,19 +83,16 @@ func New(cs charset.Charset, length int, opts ...Option) (Enumerator, error) {
 	maxValues := numValues(base, length)
 
 	o := &enumerator{
-		base:          base,
-		baseBigInt:    big.NewInt(int64(base)),
-		charset:       charsetRunes,
-		length:        length,
-		location:      big.NewInt(1),
-		locationMax:   new(big.Int).Set(maxValues),
-		value:         make([]int, length),
-		dividend:      new(big.Int),
-		remainder:     new(big.Int),
-		multiplier:    new(big.Int),
-		val:           new(big.Int),
-		locationDirty: false,
-		stringDirty:   true, // Need to compute initial string
+		base:        base,
+		baseBigInt:  big.NewInt(int64(base)),
+		charset:     charsetRunes,
+		length:      length,
+		location:    big.NewInt(1),
+		locationMax: new(big.Int).Set(maxValues),
+		value:       make([]int, length),
+		dividend:    new(big.Int),
+		remainder:   new(big.Int),
+		stringDirty: true, // Need to compute initial string
 	}
 
 	// Detect if we can use uint64 fast-path
@@ -161,12 +153,10 @@ func (o *enumerator) Decrement() bool {
 	// Decrement value array directly
 	for idx := o.length - 1; idx >= 0; idx-- {
 		if o.decrementAtIndex(idx) {
-			if !o.locationDirty {
-				if o.useUint64 {
-					o.locationUint64--
-				}
-				o.location.Sub(o.location, biOne)
+			if o.useUint64 {
+				o.locationUint64--
 			}
+			o.location.Sub(o.location, biOne)
 			o.stringDirty = true
 			return true
 		}
@@ -182,7 +172,6 @@ func (o *enumerator) DecrementN(n *big.Int) bool {
 		return false
 	}
 
-	o.ensureLocation()
 	if o.useUint64 {
 		maxUint64 := o.locationMaxUint64
 		var nUint64 uint64
@@ -231,7 +220,6 @@ func (o *enumerator) DecrementN(n *big.Int) bool {
 		}
 	}
 	o.computeValue()
-	o.locationDirty = false // location is now in sync with value
 	return true
 }
 
@@ -246,7 +234,6 @@ func (o *enumerator) Location() *big.Int {
 	o.mutex.RLock()
 	defer o.mutex.RUnlock()
 
-	o.ensureLocation()
 	if o.useUint64 {
 		return new(big.Int).SetUint64(o.locationUint64)
 	}
@@ -277,12 +264,10 @@ func (o *enumerator) Increment() bool {
 	// Increment value array directly
 	for idx := o.length - 1; idx >= 0; idx-- {
 		if o.incrementAtIndex(idx) {
-			if !o.locationDirty {
-				if o.useUint64 {
-					o.locationUint64++
-				}
-				o.location.Add(o.location, biOne)
+			if o.useUint64 {
+				o.locationUint64++
 			}
+			o.location.Add(o.location, biOne)
 			o.stringDirty = true
 			return true
 		}
@@ -298,7 +283,6 @@ func (o *enumerator) IncrementN(n *big.Int) bool {
 		return false
 	}
 
-	o.ensureLocation()
 	if o.useUint64 {
 		maxUint64 := o.locationMaxUint64
 		var nUint64 uint64
@@ -347,7 +331,6 @@ func (o *enumerator) IncrementN(n *big.Int) bool {
 		}
 	}
 	o.computeValue()
-	o.locationDirty = false // location is now in sync with value
 	return true
 }
 
@@ -372,7 +355,6 @@ func (o *enumerator) GoTo(n *big.Int) error {
 		o.location.Set(n)
 	}
 	o.computeValue()
-	o.locationDirty = false // location is now in sync with value
 	return nil
 }
 
@@ -456,7 +438,6 @@ func (o *enumerator) first() {
 	for idx := range o.value {
 		o.value[idx] = 0
 	}
-	o.locationDirty = false
 	o.stringDirty = true
 }
 
@@ -482,40 +463,5 @@ func (o *enumerator) last() {
 	for idx := range o.value {
 		o.value[idx] = o.base - 1
 	}
-	o.locationDirty = false
 	o.stringDirty = true
-}
-
-// ensureLocation computes location from value array if it's dirty
-func (o *enumerator) ensureLocation() {
-	if !o.locationDirty {
-		return
-	}
-
-	// Compute location from value array
-	// location = 1 + sum(value[i] * base^(length-1-i))
-	if o.useUint64 {
-		o.locationUint64 = 1
-		multiplier := uint64(1)
-		base := uint64(o.base)
-		for idx := o.length - 1; idx >= 0; idx-- {
-			if o.value[idx] > 0 {
-				o.locationUint64 += uint64(o.value[idx]) * multiplier
-			}
-			multiplier *= base
-		}
-		o.location.SetUint64(o.locationUint64)
-	} else {
-		o.location.Set(biOne)
-		o.multiplier.SetInt64(1)
-		for idx := o.length - 1; idx >= 0; idx-- {
-			if o.value[idx] > 0 {
-				o.val.SetInt64(int64(o.value[idx]))
-				o.val.Mul(o.val, o.multiplier)
-				o.location.Add(o.location, o.val)
-			}
-			o.multiplier.Mul(o.multiplier, o.baseBigInt)
-		}
-	}
-	o.locationDirty = false
 }
