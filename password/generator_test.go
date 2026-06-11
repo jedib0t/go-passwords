@@ -324,3 +324,22 @@ func TestNewGenerator_WithBasicRules(t *testing.T) {
 		assert.NotEmpty(t, pw)
 	}
 }
+
+func TestGenerator_Generate_SymbolsWithoutNumSymbolsRule(t *testing.T) {
+	// regression test: without a WithNumSymbols rule, symbols in the charset
+	// must still be eligible for every position; the old implementation
+	// silently filled the whole password from non-symbol characters only
+	g, err := NewGenerator(
+		WithCharset(charset.AllChars),
+		WithLength(12),
+	)
+	assert.Nil(t, err)
+
+	sawSymbol := false
+	for i := 0; i < 200 && !sawSymbol; i++ {
+		pw, err := g.Generate()
+		assert.NoError(t, err)
+		sawSymbol = getNumSymbols(pw) > 0
+	}
+	assert.True(t, sawSymbol, "expected at least one symbol across 200 default-rule passwords")
+}

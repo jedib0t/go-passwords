@@ -47,7 +47,8 @@ func WithMinUpperCase(min int) Rule {
 }
 
 // WithNumSymbols controls the min/max number of symbols that can appear in the
-// password.
+// password. When this rule is not used, symbols in the charset are treated
+// like any other character and may appear any number of times.
 //
 // Note: This works only on a Generator and is ineffective with a Sequencer.
 func WithNumSymbols(min, max int) Rule {
@@ -65,5 +66,6 @@ func WithNumSymbols(min, max int) Rule {
 	return func(g *generator) {
 		g.minSymbols = min
 		g.maxSymbols = max
+		g.symbolsConfigured = true
 	}
 }

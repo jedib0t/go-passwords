@@ -35,6 +35,7 @@ type generator struct {
 	minSymbols        int
 	maxSymbols        int
 	numChars          int
+	symbolsConfigured bool
 	pool              *sync.Pool
 }
 
@@ -103,7 +104,14 @@ func (g *generator) GenerateTo(buf []byte) (int, error) {
 		}
 	}
 	if remainingChars := len(password) - idx; remainingChars > 0 {
-		if err := g.fill(password, g.charsetNonSymbols, remainingChars, &idx); err != nil {
+		// when WithNumSymbols was configured, the symbol count generated above
+		// is an exact quota, so the remaining characters must avoid symbols;
+		// otherwise the full charset is fair game
+		remainingCharset := g.charset
+		if g.symbolsConfigured {
+			remainingCharset = g.charsetNonSymbols
+		}
+		if err := g.fill(password, remainingCharset, remainingChars, &idx); err != nil {
 			return 0, err
 		}
 	}
