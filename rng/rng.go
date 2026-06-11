@@ -2,6 +2,7 @@ package rng
 
 import (
 	"encoding/binary"
+	"math"
 )
 
 // IntN returns a random integer in [0, n) using crypto/rand. A value of 1 is
@@ -28,24 +29,39 @@ func IntN(n int) (int, error) {
 		}
 	}
 
-	// For larger n, use rejection sampling to avoid modulo bias.
-	max := uint32((uint64(1) << 32) / uint64(n) * uint64(n))
-	if max == 0 {
+	// For n up to 2^32, use 4-byte rejection sampling to avoid modulo bias.
+	if uint64(n) <= 1<<32 {
+		limit := (uint64(1) << 32) / uint64(n) * uint64(n)
 		var b [4]byte
-		if err := readBytesBuffered(b[:]); err != nil {
-			return 0, err
+		for {
+			if err := readBytesBuffered(b[:]); err != nil {
+				return 0, err
+			}
+			val := uint64(binary.BigEndian.Uint32(b[:]))
+			if val < limit {
+				return int(val % uint64(n)), nil
+			}
 		}
-		return int(binary.BigEndian.Uint32(b[:])) % n, nil
 	}
 
-	var b [4]byte
+	// For larger n, use 8-byte rejection sampling.
+	return intN64(n)
+}
+
+// intN64 returns a random integer in [0, n) for n > 2^32. It reads 8 random
+// bytes per attempt and rejects values at or above the largest multiple of n
+// representable in 64 bits to avoid modulo bias.
+func intN64(n int) (int, error) {
+	un := uint64(n)
+	rem := (math.MaxUint64%un + 1) % un // 2^64 mod n
+	var b [8]byte
 	for {
 		if err := readBytesBuffered(b[:]); err != nil {
 			return 0, err
 		}
-		val := binary.BigEndian.Uint32(b[:])
-		if val < max {
-			return int(val % uint32(n)), nil
+		val := binary.BigEndian.Uint64(b[:])
+		if rem == 0 || val <= math.MaxUint64-rem {
+			return int(val % un), nil
 		}
 	}
 }
@@ -95,40 +111,32 @@ func FillIntNs(buf []int, n int) error {
 		return fillIntNsBytes(buf, n)
 	}
 
-	// For larger n, use rejection sampling to avoid modulo bias.
-	max := uint32((uint64(1) << 32) / uint64(n) * uint64(n))
-	if max == 0 {
-		// Fallback for extremely large n where simple modulo is acceptable or max calculation overflows.
-		var stackBuf [64]byte
-		var b []byte = stackBuf[:]
-		if count*4 > len(stackBuf) {
-			b = make([]byte, count*4)
-		} else {
-			b = b[:count*4]
-		}
-
-		if err := readBytesBuffered(b); err != nil {
-			return err
-		}
+	// For n up to 2^32, use 4-byte rejection sampling per value.
+	if uint64(n) <= 1<<32 {
+		limit := (uint64(1) << 32) / uint64(n) * uint64(n)
+		var b [4]byte
 		for i := 0; i < count; i++ {
-			buf[i] = int(binary.BigEndian.Uint32(b[i*4:])) % n
+			for {
+				if err := readBytesBuffered(b[:]); err != nil {
+					return err
+				}
+				val := uint64(binary.BigEndian.Uint32(b[:]))
+				if val < limit {
+					buf[i] = int(val % uint64(n))
+					break
+				}
+			}
 		}
 		return nil
 	}
 
-	// Rejection sampling loop to ensure zero bias.
-	var b [4]byte
+	// For larger n, use 8-byte rejection sampling per value.
 	for i := 0; i < count; i++ {
-		for {
-			if err := readBytesBuffered(b[:]); err != nil {
-				return err
-			}
-			val := binary.BigEndian.Uint32(b[:])
-			if val < max {
-				buf[i] = int(val % uint32(n))
-				break
-			}
+		v, err := intN64(n)
+		if err != nil {
+			return err
 		}
+		buf[i] = v
 	}
 	return nil
 }

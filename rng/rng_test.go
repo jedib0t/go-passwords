@@ -58,6 +58,23 @@ func TestIntN(t *testing.T) {
 		}
 	})
 
+	t.Run("very large n (n > 2^32) covers full range", func(t *testing.T) {
+		// The old implementation could never return values >= 2^32 for such
+		// n; with n == 2^33 roughly half of all draws must be above 2^32.
+		n := 1 << 33
+		sawHigh := false
+		for i := 0; i < 200; i++ {
+			result, err := IntN(n)
+			assert.NoError(t, err)
+			assert.GreaterOrEqual(t, result, 0)
+			assert.Less(t, result, n)
+			if result >= 1<<32 {
+				sawHigh = true
+			}
+		}
+		assert.True(t, sawHigh, "expected at least one value >= 2^32 out of 200 draws")
+	})
+
 	t.Run("range coverage", func(t *testing.T) {
 		// Test that we get values across the entire range
 		n := 10
