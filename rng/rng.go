@@ -79,22 +79,33 @@ func FillIntNs(buf []int, n int) error {
 		return nil
 	}
 
-	// For small n, use modulo directly as bias is negligible.
-	// We use a small stack buffer to avoid heap allocation for the temporary byte slice.
+	// For small n, draw batches of bytes and filter them through rejection
+	// sampling to avoid modulo bias. Batches are oversampled to cover the
+	// expected rejection rate, and topped up until the buffer is full. A small
+	// stack buffer avoids heap allocation for the temporary byte slice.
 	if n <= 256 {
-		var stackBuf [64]byte
-		var b []byte = stackBuf[:]
-		if count > len(stackBuf) {
-			b = make([]byte, count)
-		} else {
-			b = b[:count]
-		}
-
-		if err := readBytesBuffered(b); err != nil {
-			return err
-		}
-		for i := 0; i < count; i++ {
-			buf[i] = int(b[i]) % n
+		limit := byteLimit(n)
+		var stackBuf [128]byte
+		filled := 0
+		for filled < count {
+			want := count - filled
+			req := want + want/2 + 8 // oversample for rejected bytes
+			if req > len(stackBuf) {
+				req = len(stackBuf)
+			}
+			b := stackBuf[:req]
+			if err := readBytesBuffered(b); err != nil {
+				return err
+			}
+			for _, by := range b {
+				if int(by) < limit {
+					buf[filled] = int(by) % n
+					filled++
+					if filled == count {
+						break
+					}
+				}
+			}
 		}
 		return nil
 	}
