@@ -10,12 +10,6 @@ import (
 	"github.com/jedib0t/go-passwords/rng"
 )
 
-var (
-	// storagePoolMinSize is the minimum number of objects to keep in the pool
-	// to support enough parallelism.
-	storagePoolMinSize = 25
-)
-
 type Generator interface {
 	// Generate returns a randomly generated password.
 	Generate() (string, error)
@@ -53,16 +47,13 @@ func NewGenerator(rules ...Rule) (Generator, error) {
 	g.charsetNonSymbols = filterRunes(g.charset, func(r rune) bool { return !charset.Symbols.Contains(r) })
 	g.charsetSymbols = filterRunes(g.charset, charset.Symbols.Contains)
 
-	// create a storage pool with enough objects to support enough parallelism
+	// create a storage pool for the working buffers; New covers misses, so
+	// the pool needs no pre-filling
 	g.pool = &sync.Pool{
 		New: func() any {
 			r := make([]rune, g.numChars)
 			return &r
 		},
-	}
-	for idx := 0; idx < storagePoolMinSize; idx++ {
-		r := make([]rune, g.numChars)
-		g.pool.Put(&r)
 	}
 
 	return g.sanitize()
