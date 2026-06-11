@@ -192,6 +192,12 @@ func (g *generator) sanitize() (Generator, error) {
 	if g.minLowerCase+g.minUpperCase+g.minSymbols > g.numChars {
 		return nil, ErrRequirementsNotMet
 	}
+	// clamp maxSymbols to the space left over after the other minimums;
+	// without this, numSymbolsToGenerate can exceed the password length and
+	// overrun the working buffer
+	if maxFit := g.numChars - g.minLowerCase - g.minUpperCase; g.maxSymbols > maxFit {
+		g.maxSymbols = maxFit
+	}
 	return g, nil
 }
 

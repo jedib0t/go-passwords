@@ -290,6 +290,26 @@ func TestWithNumSymbols_EdgeCases(t *testing.T) {
 	})
 }
 
+func TestGenerator_Generate_MaxSymbolsExceedsLength(t *testing.T) {
+	// regression test: maxSymbols larger than the space left in the password
+	// used to pass sanitize() and panic with an index-out-of-range inside
+	// fill() whenever the drawn symbol count exceeded the password length
+	g, err := NewGenerator(
+		WithCharset(charset.Charset("abcdef!@#$%^&*")),
+		WithLength(4),
+		WithNumSymbols(0, 8),
+	)
+	assert.NotNil(t, g)
+	assert.Nil(t, err)
+
+	for i := 0; i < 500; i++ {
+		pw, err := g.Generate()
+		assert.NoError(t, err)
+		assert.Equal(t, 4, len(pw))
+		assert.LessOrEqual(t, getNumSymbols(pw), 4)
+	}
+}
+
 func TestNewGenerator_WithBasicRules(t *testing.T) {
 	// Test that NewGenerator applies basicRules by default
 	g, err := NewGenerator()
