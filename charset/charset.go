@@ -30,6 +30,7 @@ var (
 		'0': true,
 		'l': true,
 		'I': true,
+		'1': true,
 	}
 )
 

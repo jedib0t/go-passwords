@@ -14,7 +14,7 @@ func TestCharset(t *testing.T) {
 		Shuffle(rng).
 		WithoutAmbiguity().
 		WithoutDuplicates()
-	assert.Equal(t, "h72MfFSYvaW3GogBTczCys1b4e5Ex9tXmpZHJUR8riAjLdNquPwkKQVDn6", string(cs))
+	assert.Equal(t, "h72MfFSYvaW3GogBTczCysb4e5Ex9tXmpZHJUR8riAjLdNquPwkKQVDn6", string(cs))
 }
 
 func TestCharset_Contains(t *testing.T) {
@@ -35,7 +35,7 @@ func TestCharset_Shuffle(t *testing.T) {
 }
 
 func TestCharset_WithoutAmbiguity(t *testing.T) {
-	cs := Charset("abcde0oLlI")
+	cs := Charset("abcde0oLlI1")
 	cs = cs.WithoutAmbiguity()
 	assert.Equal(t, "abcdeoL", string(cs))
 }
