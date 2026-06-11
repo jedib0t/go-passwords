@@ -95,6 +95,12 @@ func (g *generator) GenerateTo(buf []byte) (int, error) {
 	return offset, nil
 }
 
+// getUniqueWordIndex returns a random dictionary index not present in
+// pickedIndices. The rejection loop is guaranteed to terminate quickly
+// because sanitize() enforces MinWordsInDictionary (256) > NumWordsMax (32):
+// at most 32 of at least 256 indices can ever be excluded, so each draw
+// succeeds with probability > 87%. Keep that invariant intact when changing
+// either constant.
 func (g *generator) getUniqueWordIndex(pickedIndices []int) (int, error) {
 	for {
 		wordIndex, err := rng.IntN(g.dictionaryLen)
