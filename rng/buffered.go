@@ -43,8 +43,10 @@ func readBytesBuffered(b []byte) error {
 		randPos = 0
 	}
 
-	// Copy bytes from buffer
+	// Copy bytes from buffer and zero the consumed region so that bytes used
+	// to derive secrets do not linger in this long-lived global buffer.
 	copy(b, randBuffer[randPos:randPos+needed])
+	clear(randBuffer[randPos : randPos+needed])
 	randPos += needed
 
 	return nil
