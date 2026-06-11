@@ -1,6 +1,10 @@
 package passphrase
 
-import "github.com/jedib0t/go-passwords/passphrase/dictionaries"
+import (
+	"slices"
+
+	"github.com/jedib0t/go-passwords/passphrase/dictionaries"
+)
 
 // Rule controls how the Generator generates passwords.
 type Rule func(g *generator)
@@ -23,10 +27,12 @@ func WithCapitalizedWords(enabled bool) Rule {
 	}
 }
 
-// WithDictionary sets the dictionary of words to use for the passphrase.
+// WithDictionary sets the dictionary of words to use for the passphrase. The
+// slice is cloned so that the caller's copy is never reordered or rewritten
+// by the generator's filtering, sorting and capitalization.
 func WithDictionary(words []string) Rule {
 	return func(g *generator) {
-		g.dictionary = words
+		g.dictionary = slices.Clone(words)
 	}
 }
 

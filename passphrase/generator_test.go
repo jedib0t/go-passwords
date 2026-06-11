@@ -49,3 +49,22 @@ func TestGenerator_Generate(t *testing.T) {
 		assert.True(t, hasNumber, "passphrase should contain at least one number: %s", passphrase)
 	}
 }
+
+func TestNewGenerator_DoesNotMutateCallerDictionary(t *testing.T) {
+	// regression test: sanitize() filters, sorts, compacts and capitalizes
+	// the dictionary; none of that may leak into the slice the caller passed
+	words := []string{"zebra", "apple", "mango", "banana", "cherry", "papaya"}
+	words = append(words, dictionaries.English()...)
+	original := make([]string, len(words))
+	copy(original, words)
+
+	g, err := NewGenerator(
+		WithDictionary(words),
+		WithCapitalizedWords(true),
+		WithNumWords(3),
+		WithWordLength(4, 7),
+	)
+	assert.NotNil(t, g)
+	assert.Nil(t, err)
+	assert.Equal(t, original, words, "caller's dictionary slice must not be modified")
+}
