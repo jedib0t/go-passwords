@@ -4,10 +4,14 @@ import (
 	"encoding/binary"
 )
 
-// IntN returns a random integer in [0, n) using crypto/rand.
+// IntN returns a random integer in [0, n) using crypto/rand. A value of 1 is
+// valid and always yields 0; values below 1 return ErrInvalidN.
 func IntN(n int) (int, error) {
-	if n <= 1 {
+	if n < 1 {
 		return 0, ErrInvalidN
+	}
+	if n == 1 {
+		return 0, nil
 	}
 
 	// For small n, use single-byte rejection sampling to avoid modulo bias.
@@ -69,45 +73,26 @@ func IntNs(n int, count int) ([]int, error) {
 
 // FillIntNs fills the provided slice with random integers in [0, n).
 // It uses batching to reduce mutex contention and stack-allocated buffers for
-// small requests to minimize additional heap allocations.
+// small requests to minimize additional heap allocations. A value of 1 for n
+// is valid and fills the slice with zeroes; values below 1 return ErrInvalidN.
 func FillIntNs(buf []int, n int) error {
-	if n <= 1 {
+	if n < 1 {
 		return ErrInvalidN
 	}
 	count := len(buf)
 	if count <= 0 {
 		return nil
 	}
-
-	// For small n, draw batches of bytes and filter them through rejection
-	// sampling to avoid modulo bias. Batches are oversampled to cover the
-	// expected rejection rate, and topped up until the buffer is full. A small
-	// stack buffer avoids heap allocation for the temporary byte slice.
-	if n <= 256 {
-		limit := byteLimit(n)
-		var stackBuf [128]byte
-		filled := 0
-		for filled < count {
-			want := count - filled
-			req := want + want/2 + 8 // oversample for rejected bytes
-			if req > len(stackBuf) {
-				req = len(stackBuf)
-			}
-			b := stackBuf[:req]
-			if err := readBytesBuffered(b); err != nil {
-				return err
-			}
-			for _, by := range b {
-				if int(by) < limit {
-					buf[filled] = int(by) % n
-					filled++
-					if filled == count {
-						break
-					}
-				}
-			}
+	if n == 1 {
+		for i := range buf {
+			buf[i] = 0
 		}
 		return nil
+	}
+
+	// For small n, use batched single-byte rejection sampling.
+	if n <= 256 {
+		return fillIntNsBytes(buf, n)
 	}
 
 	// For larger n, use rejection sampling to avoid modulo bias.
@@ -142,6 +127,39 @@ func FillIntNs(buf []int, n int) error {
 			if val < max {
 				buf[i] = int(val % uint32(n))
 				break
+			}
+		}
+	}
+	return nil
+}
+
+// fillIntNsBytes fills the provided slice with random integers in [0, n) for
+// n <= 256. It draws batches of bytes and filters them through rejection
+// sampling to avoid modulo bias. Batches are oversampled to cover the
+// expected rejection rate, and topped up until the buffer is full. A small
+// stack buffer avoids heap allocation for the temporary byte slice.
+func fillIntNsBytes(buf []int, n int) error {
+	count := len(buf)
+	limit := byteLimit(n)
+	var stackBuf [128]byte
+	filled := 0
+	for filled < count {
+		want := count - filled
+		req := want + want/2 + 8 // oversample for rejected bytes
+		if req > len(stackBuf) {
+			req = len(stackBuf)
+		}
+		b := stackBuf[:req]
+		if err := readBytesBuffered(b); err != nil {
+			return err
+		}
+		for _, by := range b {
+			if int(by) < limit {
+				buf[filled] = int(by) % n
+				filled++
+				if filled == count {
+					break
+				}
 			}
 		}
 	}

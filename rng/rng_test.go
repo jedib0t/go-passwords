@@ -19,7 +19,7 @@ func TestIntN(t *testing.T) {
 
 	t.Run("n == 1", func(t *testing.T) {
 		result, err := IntN(1)
-		assert.Equal(t, ErrInvalidN, err)
+		assert.NoError(t, err)
 		assert.Equal(t, 0, result)
 	})
 
@@ -70,6 +70,31 @@ func TestIntN(t *testing.T) {
 		}
 		// With 1000 iterations and n=10, we should see all values
 		assert.GreaterOrEqual(t, len(seen), n-1, "should see most values in range [0, %d)", n)
+	})
+}
+
+func TestFillIntNs(t *testing.T) {
+	t.Run("n < 1", func(t *testing.T) {
+		buf := make([]int, 8)
+		assert.Equal(t, ErrInvalidN, FillIntNs(buf, 0))
+		assert.Equal(t, ErrInvalidN, FillIntNs(buf, -5))
+	})
+
+	t.Run("n == 1", func(t *testing.T) {
+		buf := []int{7, 7, 7, 7}
+		err := FillIntNs(buf, 1)
+		assert.NoError(t, err)
+		assert.Equal(t, []int{0, 0, 0, 0}, buf)
+	})
+
+	t.Run("small n", func(t *testing.T) {
+		buf := make([]int, 1000)
+		err := FillIntNs(buf, 66)
+		assert.NoError(t, err)
+		for _, v := range buf {
+			assert.GreaterOrEqual(t, v, 0)
+			assert.Less(t, v, 66)
+		}
 	})
 }
 
