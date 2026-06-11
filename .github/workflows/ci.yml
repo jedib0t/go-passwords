@@ -12,6 +12,9 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   # Build and test everything
   build:
@@ -25,18 +28,28 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: 1.22
+          go-version: "1.25"
 
       # Download all the tools used in the steps that follow
       - name: Set up Tools
         run: |
           go install github.com/fzipp/gocyclo/cmd/gocyclo@v0.6.0
           go install github.com/mattn/goveralls@v0.0.12
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          go install honnef.co/go/tools/cmd/staticcheck@latest
 
-      # Run all the unit-tests
+      # Run all the unit-tests (with the race detector via make test)
       - name: Test
         run: |
           make test
+
+      # Run static analysis
+      - name: Staticcheck
+        run: staticcheck ./...
+
+      # Check dependencies and stdlib usage for known vulnerabilities
+      - name: Vulnerability Check
+        run: make vulncheck
 
       # Run the benchmarks to manually ensure no performance degradation
       - name: Benchmark
@@ -48,4 +61,3 @@ jobs:
         env:
           COVERALLS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: goveralls -service=github -coverprofile=.coverprofile
-
