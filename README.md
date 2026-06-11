@@ -130,7 +130,10 @@ Systematically enumerate all possible string combinations from a character set a
 
 ### Example
 ```golang
-	o := enumerator.New(charset.AlphabetsUpper, 8)
+	o, err := enumerator.New(charset.AlphabetsUpper, 8)
+	if err != nil {
+		panic(err.Error())
+	}
 
 	for i := 1; i <= 10; i++ {
 		fmt.Printf("Combination #%3d: %#v\n", i, o.String())

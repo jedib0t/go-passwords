@@ -29,7 +29,10 @@ func main() {
 }
 
 func demoEnumerator() {
-	o := enumerator.New(charset.AlphabetsUpper, 8)
+	o, err := enumerator.New(charset.AlphabetsUpper, 8)
+	if err != nil {
+		panic(err.Error())
+	}
 
 	for idx := 1; idx <= 10; idx++ {
 		fmt.Printf("Password #%3d: %#v\n", idx, o.String())

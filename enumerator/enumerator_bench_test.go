@@ -12,7 +12,7 @@ import (
 )
 
 func BenchmarkEnumerator_Decrement(b *testing.B) {
-	o := New(charset.Numbers, 8, WithRolloverEnabled(true))
+	o := mustNew(charset.Numbers, 8, WithRolloverEnabled(true))
 
 	for i := 0; i < b.N; i++ {
 		_ = o.Decrement()
@@ -20,7 +20,7 @@ func BenchmarkEnumerator_Decrement(b *testing.B) {
 }
 
 func BenchmarkEnumerator_Decrement_Big(b *testing.B) {
-	o := New(charset.AllChars, 256)
+	o := mustNew(charset.AllChars, 256)
 	o.Last()
 
 	for i := 0; i < b.N; i++ {
@@ -29,7 +29,7 @@ func BenchmarkEnumerator_Decrement_Big(b *testing.B) {
 }
 
 func BenchmarkEnumerator_DecrementN(b *testing.B) {
-	o := New(charset.Numbers, 8, WithRolloverEnabled(true))
+	o := mustNew(charset.Numbers, 8, WithRolloverEnabled(true))
 
 	n := big.NewInt(5)
 	for i := 0; i < b.N; i++ {
@@ -38,7 +38,7 @@ func BenchmarkEnumerator_DecrementN(b *testing.B) {
 }
 
 func BenchmarkEnumerator_GoTo(b *testing.B) {
-	o := New(charset.Numbers, 8, WithRolloverEnabled(true))
+	o := mustNew(charset.Numbers, 8, WithRolloverEnabled(true))
 	maxValues := int64(math.Pow(10, 8))
 	rng := rand.New(rand.NewSource(time.Now().Unix()))
 
@@ -51,7 +51,7 @@ func BenchmarkEnumerator_GoTo(b *testing.B) {
 }
 
 func BenchmarkEnumerator_Increment(b *testing.B) {
-	o := New(charset.Numbers, 8, WithRolloverEnabled(true))
+	o := mustNew(charset.Numbers, 8, WithRolloverEnabled(true))
 
 	for i := 0; i < b.N; i++ {
 		_ = o.Increment()
@@ -59,7 +59,7 @@ func BenchmarkEnumerator_Increment(b *testing.B) {
 }
 
 func BenchmarkEnumerator_Increment_Big(b *testing.B) {
-	o := New(charset.AllChars, 256)
+	o := mustNew(charset.AllChars, 256)
 
 	for i := 0; i < b.N; i++ {
 		_ = o.Increment()
@@ -67,7 +67,7 @@ func BenchmarkEnumerator_Increment_Big(b *testing.B) {
 }
 
 func BenchmarkEnumerator_IncrementN(b *testing.B) {
-	o := New(charset.Numbers, 8, WithRolloverEnabled(true))
+	o := mustNew(charset.Numbers, 8, WithRolloverEnabled(true))
 
 	n := big.NewInt(5)
 	for i := 0; i < b.N; i++ {
@@ -76,7 +76,7 @@ func BenchmarkEnumerator_IncrementN(b *testing.B) {
 }
 
 func BenchmarkEnumerator_String(b *testing.B) {
-	o := New(charset.Numbers, 12)
+	o := mustNew(charset.Numbers, 12)
 
 	for i := 0; i < b.N; i++ {
 		_ = o.String()
@@ -84,7 +84,7 @@ func BenchmarkEnumerator_String(b *testing.B) {
 }
 
 func BenchmarkEnumerator_AtEnd(b *testing.B) {
-	o := New(charset.Numbers, 12)
+	o := mustNew(charset.Numbers, 12)
 
 	for i := 0; i < b.N; i++ {
 		_ = o.AtEnd()

@@ -74,15 +74,23 @@ type enumerator struct {
 }
 
 // New returns a new Enumerator with "length" gears each containing the given
-// Charset as the values.
-func New(cs charset.Charset, length int, opts ...Option) Enumerator {
-	base := len(cs)
+// Charset as the values. It returns an error for an empty charset or a
+// length less than 1.
+func New(cs charset.Charset, length int, opts ...Option) (Enumerator, error) {
+	charsetRunes := []rune(cs)
+	base := len(charsetRunes)
+	if base == 0 {
+		return nil, ErrEmptyCharset
+	}
+	if length < 1 {
+		return nil, ErrInvalidLength
+	}
 	maxValues := numValues(base, length)
 
 	o := &enumerator{
 		base:          base,
 		baseBigInt:    big.NewInt(int64(base)),
-		charset:       []rune(cs),
+		charset:       charsetRunes,
 		length:        length,
 		location:      big.NewInt(1),
 		locationMax:   new(big.Int).Set(maxValues),
@@ -114,7 +122,7 @@ func New(cs charset.Charset, length int, opts ...Option) Enumerator {
 	for _, opt := range opts {
 		opt(o)
 	}
-	return o
+	return o, nil
 }
 
 func (o *enumerator) AtEnd() bool {

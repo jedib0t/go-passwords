@@ -11,7 +11,7 @@ import (
 
 func TestEnumerator(t *testing.T) {
 	t.Run("default", func(t *testing.T) {
-		o := New(charset.Numbers, 2)
+		o := mustNew(charset.Numbers, 2)
 		assert.Equal(t, "1", o.Location().String())
 		assert.Equal(t, "00", o.String())
 
@@ -51,7 +51,7 @@ func TestEnumerator(t *testing.T) {
 	})
 
 	t.Run("rollover", func(t *testing.T) {
-		o := New(charset.Numbers, 2, WithRolloverEnabled(true))
+		o := mustNew(charset.Numbers, 2, WithRolloverEnabled(true))
 		assert.Equal(t, "1", o.Location().String())
 		assert.Equal(t, "00", o.String())
 
@@ -91,7 +91,7 @@ func TestEnumerator(t *testing.T) {
 	})
 
 	t.Run("really big enumerator", func(t *testing.T) {
-		o := New(charset.AllChars, 256)
+		o := mustNew(charset.AllChars, 256)
 		assert.Equal(t, "1", o.Location().String())
 		assert.Equal(t, "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", o.String())
 
@@ -122,7 +122,7 @@ func TestEnumerator(t *testing.T) {
 }
 
 func TestEnumerator_Decrement(t *testing.T) {
-	o := New(charset.Numbers, 3)
+	o := mustNew(charset.Numbers, 3)
 	assert.Equal(t, "1", o.Location().String())
 	assert.Equal(t, "000", o.String())
 
@@ -139,7 +139,7 @@ func TestEnumerator_Decrement(t *testing.T) {
 
 func TestEnumerator_DecrementN(t *testing.T) {
 	t.Run("default", func(t *testing.T) {
-		o := New(charset.Numbers, 2)
+		o := mustNew(charset.Numbers, 2)
 		assert.Equal(t, "1", o.Location().String())
 		assert.Equal(t, "00", o.String())
 
@@ -164,7 +164,7 @@ func TestEnumerator_DecrementN(t *testing.T) {
 	})
 
 	t.Run("rollover", func(t *testing.T) {
-		o := New(charset.Numbers, 2, WithRolloverEnabled(true))
+		o := mustNew(charset.Numbers, 2, WithRolloverEnabled(true))
 		assert.Equal(t, "1", o.Location().String())
 		assert.Equal(t, "00", o.String())
 
@@ -186,7 +186,7 @@ func TestEnumerator_DecrementN(t *testing.T) {
 }
 
 func TestEnumerator_GoTo(t *testing.T) {
-	o := New(charset.Numbers, 2)
+	o := mustNew(charset.Numbers, 2)
 	assert.Equal(t, "1", o.Location().String())
 	assert.Equal(t, "00", o.String())
 
@@ -215,7 +215,7 @@ func TestEnumerator_GoTo(t *testing.T) {
 }
 
 func TestEnumerator_Increment(t *testing.T) {
-	o := New(charset.Numbers, 3)
+	o := mustNew(charset.Numbers, 3)
 	assert.Equal(t, "1", o.Location().String())
 
 	for idx := int64(2); idx <= 1000; idx++ {
@@ -227,7 +227,7 @@ func TestEnumerator_Increment(t *testing.T) {
 
 func TestEnumerator_IncrementN(t *testing.T) {
 	t.Run("default", func(t *testing.T) {
-		o := New(charset.Numbers, 2)
+		o := mustNew(charset.Numbers, 2)
 		assert.Equal(t, "1", o.Location().String())
 		assert.Equal(t, "00", o.String())
 
@@ -247,7 +247,7 @@ func TestEnumerator_IncrementN(t *testing.T) {
 	})
 
 	t.Run("rollover", func(t *testing.T) {
-		o := New(charset.Numbers, 2, WithRolloverEnabled(true))
+		o := mustNew(charset.Numbers, 2, WithRolloverEnabled(true))
 		assert.Equal(t, "1", o.Location().String())
 		assert.Equal(t, "00", o.String())
 
@@ -268,7 +268,7 @@ func TestEnumerator_IncrementN(t *testing.T) {
 }
 
 func TestEnumerator_AtEnd(t *testing.T) {
-	o := New(charset.Numbers, 2)
+	o := mustNew(charset.Numbers, 2)
 	assert.False(t, o.AtEnd())
 
 	o.Last()
@@ -282,7 +282,7 @@ func TestEnumerator_AtEnd(t *testing.T) {
 }
 
 func TestEnumerator_decrementAtIndex_EdgeCases(t *testing.T) {
-	o := New(charset.Numbers, 3)
+	o := mustNew(charset.Numbers, 3)
 
 	// Test decrementAtIndex edge case by trying to decrement when already at first
 	o.First()
@@ -295,7 +295,7 @@ func TestEnumerator_decrementAtIndex_EdgeCases(t *testing.T) {
 }
 
 func TestEnumerator_incrementAtIndex_EdgeCases(t *testing.T) {
-	o := New(charset.Numbers, 3)
+	o := mustNew(charset.Numbers, 3)
 
 	// Test incrementAtIndex edge case by trying to increment when already at last
 	o.Last()
@@ -309,7 +309,7 @@ func TestEnumerator_incrementAtIndex_EdgeCases(t *testing.T) {
 }
 
 func TestEnumerator_String_Cache(t *testing.T) {
-	o := New(charset.Numbers, 2)
+	o := mustNew(charset.Numbers, 2)
 
 	// First call should compute and cache
 	str1 := o.String()
@@ -328,7 +328,7 @@ func TestEnumerator_String_Cache(t *testing.T) {
 }
 
 func TestEnumerator_ensureLocation(t *testing.T) {
-	o := New(charset.Numbers, 2)
+	o := mustNew(charset.Numbers, 2)
 
 	// Initially location should be clean
 	loc1 := o.Location()
@@ -352,7 +352,7 @@ func TestEnumerator_ensureLocation(t *testing.T) {
 func TestEnumerator_Decrement_LoopCompletion(t *testing.T) {
 	// Test case where decrementAtIndex doesn't return early in the loop
 	// This covers the case where the loop completes without early return
-	o := New(charset.Numbers, 1)
+	o := mustNew(charset.Numbers, 1)
 	o.GoTo(big.NewInt(5))
 
 	// Decrement should work normally
@@ -364,7 +364,7 @@ func TestEnumerator_Decrement_LoopCompletion(t *testing.T) {
 func TestEnumerator_Increment_LoopCompletion(t *testing.T) {
 	// Test case where incrementAtIndex doesn't return early in the loop
 	// This covers the case where the loop completes without early return
-	o := New(charset.Numbers, 1)
+	o := mustNew(charset.Numbers, 1)
 	o.GoTo(big.NewInt(5))
 
 	// Increment should work normally
@@ -376,7 +376,7 @@ func TestEnumerator_Increment_LoopCompletion(t *testing.T) {
 func TestEnumerator_decrementAtIndex_RecursiveFailure(t *testing.T) {
 	// Test the case where decrementAtIndex recursively calls itself but returns false
 	// This happens when we try to decrement beyond the first position
-	o := New(charset.Numbers, 2)
+	o := mustNew(charset.Numbers, 2)
 	o.First()
 
 	// Try to decrement - should fail
@@ -391,7 +391,7 @@ func TestEnumerator_decrementAtIndex_RecursiveFailure(t *testing.T) {
 func TestEnumerator_incrementAtIndex_RecursiveFailure(t *testing.T) {
 	// Test the case where incrementAtIndex recursively calls itself but returns false
 	// This happens when we try to increment beyond the last position
-	o := New(charset.Numbers, 2)
+	o := mustNew(charset.Numbers, 2)
 	o.Last()
 
 	// Try to increment - should fail
@@ -408,7 +408,7 @@ func TestEnumerator_incrementAtIndex_RecursiveFailure(t *testing.T) {
 func TestEnumerator_Decrement_AllPaths(t *testing.T) {
 	// Test Decrement when the loop doesn't find a match immediately
 	// This covers the path where decrementAtIndex returns false and loop continues
-	o := New(charset.Numbers, 3)
+	o := mustNew(charset.Numbers, 3)
 	o.GoTo(big.NewInt(100)) // "099"
 
 	// Decrement should work
@@ -420,7 +420,7 @@ func TestEnumerator_Decrement_AllPaths(t *testing.T) {
 func TestEnumerator_Increment_AllPaths(t *testing.T) {
 	// Test Increment when the loop doesn't find a match immediately
 	// This covers the path where incrementAtIndex returns false and loop continues
-	o := New(charset.Numbers, 3)
+	o := mustNew(charset.Numbers, 3)
 	o.GoTo(big.NewInt(100)) // "099"
 
 	// Increment should work
@@ -437,7 +437,7 @@ func TestEnumerator_IncrementN_DecrementN_HugeN(t *testing.T) {
 	huge := new(big.Int).Lsh(big.NewInt(1), 62) // 2^62
 
 	t.Run("increment with rollover", func(t *testing.T) {
-		o := New(charset.Numbers, 2, WithRolloverEnabled(true))
+		o := mustNew(charset.Numbers, 2, WithRolloverEnabled(true))
 		ok := o.IncrementN(huge)
 		assert.True(t, ok)
 		// (2^62) mod 100 = 4611686018427387904 mod 100 = 4 --> location 5
@@ -445,7 +445,7 @@ func TestEnumerator_IncrementN_DecrementN_HugeN(t *testing.T) {
 	})
 
 	t.Run("decrement with rollover", func(t *testing.T) {
-		o := New(charset.Numbers, 2, WithRolloverEnabled(true))
+		o := mustNew(charset.Numbers, 2, WithRolloverEnabled(true))
 		ok := o.DecrementN(huge)
 		assert.True(t, ok)
 		// (0 - 2^62) mod 100 = 96 --> location 97
@@ -453,14 +453,14 @@ func TestEnumerator_IncrementN_DecrementN_HugeN(t *testing.T) {
 	})
 
 	t.Run("increment without rollover saturates", func(t *testing.T) {
-		o := New(charset.Numbers, 2)
+		o := mustNew(charset.Numbers, 2)
 		ok := o.IncrementN(huge)
 		assert.False(t, ok)
 		assert.Equal(t, "100", o.Location().String())
 	})
 
 	t.Run("decrement without rollover saturates", func(t *testing.T) {
-		o := New(charset.Numbers, 2)
+		o := mustNew(charset.Numbers, 2)
 		o.Last()
 		ok := o.DecrementN(huge)
 		assert.False(t, ok)
@@ -470,7 +470,7 @@ func TestEnumerator_IncrementN_DecrementN_HugeN(t *testing.T) {
 
 func TestEnumerator_IncrementN_DecrementN_InvalidN(t *testing.T) {
 	t.Run("negative n is rejected", func(t *testing.T) {
-		o := New(charset.Numbers, 2, WithRolloverEnabled(true))
+		o := mustNew(charset.Numbers, 2, WithRolloverEnabled(true))
 		o.GoTo(big.NewInt(42))
 
 		assert.False(t, o.IncrementN(big.NewInt(-5)))
@@ -485,21 +485,50 @@ func TestEnumerator_IncrementN_DecrementN_InvalidN(t *testing.T) {
 		// checking n.IsUint64(), silently truncating n >= 2^64
 		huge := new(big.Int).Lsh(big.NewInt(1), 70) // 2^70; mod 100 = 24
 
-		o := New(charset.Numbers, 2, WithRolloverEnabled(true))
+		o := mustNew(charset.Numbers, 2, WithRolloverEnabled(true))
 		assert.True(t, o.IncrementN(huge))
 		assert.Equal(t, "25", o.Location().String())
 
-		o = New(charset.Numbers, 2, WithRolloverEnabled(true))
+		o = mustNew(charset.Numbers, 2, WithRolloverEnabled(true))
 		assert.True(t, o.DecrementN(huge))
 		assert.Equal(t, "77", o.Location().String())
 
-		o = New(charset.Numbers, 2)
+		o = mustNew(charset.Numbers, 2)
 		assert.False(t, o.IncrementN(huge))
 		assert.Equal(t, "100", o.Location().String())
 
-		o = New(charset.Numbers, 2)
+		o = mustNew(charset.Numbers, 2)
 		o.Last()
 		assert.False(t, o.DecrementN(huge))
 		assert.Equal(t, "1", o.Location().String())
+	})
+}
+
+// mustNew builds an Enumerator for tests and panics on invalid input.
+func mustNew(cs charset.Charset, length int, opts ...Option) Enumerator {
+	e, err := New(cs, length, opts...)
+	if err != nil {
+		panic(err)
+	}
+	return e
+}
+
+func TestNew_ErrorCases(t *testing.T) {
+	t.Run("empty charset", func(t *testing.T) {
+		e, err := New(charset.Charset(""), 8)
+		assert.Nil(t, e)
+		assert.Equal(t, ErrEmptyCharset, err)
+	})
+
+	t.Run("zero length", func(t *testing.T) {
+		e, err := New(charset.Numbers, 0)
+		assert.Nil(t, e)
+		assert.Equal(t, ErrInvalidLength, err)
+	})
+
+	t.Run("negative length", func(t *testing.T) {
+		e, err := New(charset.Numbers, -3)
+		assert.Nil(t, e)
+		assert.Equal(t, ErrInvalidLength, err)
 	})
 }
