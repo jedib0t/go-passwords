@@ -10,13 +10,18 @@ func IntN(n int) (int, error) {
 		return 0, ErrInvalidN
 	}
 
-	// For small n, use modulo directly as bias is negligible.
+	// For small n, use single-byte rejection sampling to avoid modulo bias.
 	if n <= 256 {
+		limit := byteLimit(n)
 		var b [1]byte
-		if err := readBytesBuffered(b[:]); err != nil {
-			return 0, err
+		for {
+			if err := readBytesBuffered(b[:]); err != nil {
+				return 0, err
+			}
+			if int(b[0]) < limit {
+				return int(b[0]) % n, nil
+			}
 		}
-		return int(b[0]) % n, nil
 	}
 
 	// For larger n, use rejection sampling to avoid modulo bias.
@@ -39,6 +44,13 @@ func IntN(n int) (int, error) {
 			return int(val % uint32(n)), nil
 		}
 	}
+}
+
+// byteLimit returns the largest multiple of n that fits in [1, 256]. Bytes
+// below this limit map uniformly onto [0, n) via modulo; bytes at or above it
+// must be rejected and redrawn to avoid modulo bias.
+func byteLimit(n int) int {
+	return 256 - (256 % n)
 }
 
 // IntNs returns a slice of random integers in [0, n) using crypto/rand.
