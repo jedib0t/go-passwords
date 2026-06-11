@@ -175,6 +175,12 @@ func (g *generator) sanitize() (Generator, error) {
 	if err := g.validateRules(); err != nil {
 		return nil, err
 	}
+	// a symbol quota with no symbols in the charset can only ever yield zero
+	// symbols; clamp it so numSymbolsToGenerate never asks for characters
+	// that do not exist (minSymbols > 0 is already rejected above)
+	if len(g.charsetSymbols) == 0 {
+		g.maxSymbols = 0
+	}
 	// clamp maxSymbols to the space left over after the other minimums;
 	// without this, numSymbolsToGenerate can exceed the password length and
 	// overrun the working buffer

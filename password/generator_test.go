@@ -368,3 +368,22 @@ func TestNewGenerator_AllSymbolCharsetNeedsFillers(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, 4, len(pw))
 }
+
+func TestGenerator_Generate_SymbolQuotaWithoutSymbolsInCharset(t *testing.T) {
+	// regression test: a 0-N symbol quota on a charset with no symbols used
+	// to draw a non-zero symbol count and fail Generate with an RNG error
+	g, err := NewGenerator(
+		WithCharset(charset.Charset("abcdef")),
+		WithLength(6),
+		WithNumSymbols(0, 3),
+	)
+	assert.NotNil(t, g)
+	assert.Nil(t, err)
+
+	for i := 0; i < 100; i++ {
+		pw, err := g.Generate()
+		assert.NoError(t, err)
+		assert.Equal(t, 6, len(pw))
+		assert.Equal(t, 0, getNumSymbols(pw))
+	}
+}
