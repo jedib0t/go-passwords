@@ -19,7 +19,8 @@ type Enumerator interface {
 	AtEnd() bool
 	// Decrement moves the gears back by one turn.
 	Decrement() bool
-	// DecrementN moves the gears back by N turns.
+	// DecrementN moves the gears back by N turns. N must be non-negative; a
+	// negative N leaves the Enumerator unchanged and returns false.
 	DecrementN(n *big.Int) bool
 	// First moves the gears to the first possible value.
 	First()
@@ -28,7 +29,8 @@ type Enumerator interface {
 	GoTo(n *big.Int) error
 	// Increment moves the gears forward by one turn.
 	Increment() bool
-	// IncrementN moves the gears forward by N turns.
+	// IncrementN moves the gears forward by N turns. N must be non-negative;
+	// a negative N leaves the Enumerator unchanged and returns false.
 	IncrementN(n *big.Int) bool
 	// Last moves the gears to the last possible value.
 	Last()
@@ -168,10 +170,25 @@ func (o *enumerator) DecrementN(n *big.Int) bool {
 	o.mutex.Lock()
 	defer o.mutex.Unlock()
 
+	if n.Sign() < 0 {
+		return false
+	}
+
 	o.ensureLocation()
 	if o.useUint64 {
-		nUint64 := n.Uint64()
 		maxUint64 := o.locationMaxUint64
+		var nUint64 uint64
+		if n.IsUint64() {
+			nUint64 = n.Uint64()
+		} else if o.rollover {
+			// n >= 2^64 > locationMax: Uint64() would silently truncate, so
+			// reduce n modulo locationMax up front
+			nUint64 = new(big.Int).Mod(n, o.locationMax).Uint64()
+		} else {
+			// n >= 2^64 always undershoots the start without rollover
+			o.first()
+			return false
+		}
 		if !o.rollover {
 			if nUint64 >= o.locationUint64 {
 				o.first()
@@ -269,10 +286,25 @@ func (o *enumerator) IncrementN(n *big.Int) bool {
 	o.mutex.Lock()
 	defer o.mutex.Unlock()
 
+	if n.Sign() < 0 {
+		return false
+	}
+
 	o.ensureLocation()
 	if o.useUint64 {
-		nUint64 := n.Uint64()
 		maxUint64 := o.locationMaxUint64
+		var nUint64 uint64
+		if n.IsUint64() {
+			nUint64 = n.Uint64()
+		} else if o.rollover {
+			// n >= 2^64 > locationMax: Uint64() would silently truncate, so
+			// reduce n modulo locationMax up front
+			nUint64 = new(big.Int).Mod(n, o.locationMax).Uint64()
+		} else {
+			// n >= 2^64 always overshoots the end without rollover
+			o.last()
+			return false
+		}
 		if !o.rollover {
 			if nUint64 > maxUint64-o.locationUint64 {
 				o.last()

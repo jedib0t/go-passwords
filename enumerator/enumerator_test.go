@@ -467,3 +467,39 @@ func TestEnumerator_IncrementN_DecrementN_HugeN(t *testing.T) {
 		assert.Equal(t, "1", o.Location().String())
 	})
 }
+
+func TestEnumerator_IncrementN_DecrementN_InvalidN(t *testing.T) {
+	t.Run("negative n is rejected", func(t *testing.T) {
+		o := New(charset.Numbers, 2, WithRolloverEnabled(true))
+		o.GoTo(big.NewInt(42))
+
+		assert.False(t, o.IncrementN(big.NewInt(-5)))
+		assert.Equal(t, "42", o.Location().String())
+
+		assert.False(t, o.DecrementN(big.NewInt(-5)))
+		assert.Equal(t, "42", o.Location().String())
+	})
+
+	t.Run("n beyond uint64 is not truncated", func(t *testing.T) {
+		// regression test: the uint64 fast path called n.Uint64() without
+		// checking n.IsUint64(), silently truncating n >= 2^64
+		huge := new(big.Int).Lsh(big.NewInt(1), 70) // 2^70; mod 100 = 24
+
+		o := New(charset.Numbers, 2, WithRolloverEnabled(true))
+		assert.True(t, o.IncrementN(huge))
+		assert.Equal(t, "25", o.Location().String())
+
+		o = New(charset.Numbers, 2, WithRolloverEnabled(true))
+		assert.True(t, o.DecrementN(huge))
+		assert.Equal(t, "77", o.Location().String())
+
+		o = New(charset.Numbers, 2)
+		assert.False(t, o.IncrementN(huge))
+		assert.Equal(t, "100", o.Location().String())
+
+		o = New(charset.Numbers, 2)
+		o.Last()
+		assert.False(t, o.DecrementN(huge))
+		assert.Equal(t, "1", o.Location().String())
+	})
+}
