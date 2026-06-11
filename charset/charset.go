@@ -3,6 +3,8 @@ package charset
 import (
 	"math/rand"
 	"strings"
+
+	crypto "github.com/jedib0t/go-passwords/rng"
 )
 
 // Charset contains the list of allowed characters to use for the password
@@ -42,12 +44,26 @@ func (c Charset) Contains(r rune) bool {
 }
 
 // Shuffle reorders the Charset using the given RNG.
+//
+// Deprecated: math/rand is not a cryptographically secure source of
+// randomness; use Shuffled instead. Shuffling a charset does not by itself
+// weaken generated passwords, but a seeded PRNG in a password library
+// invites misuse.
 func (c Charset) Shuffle(rng *rand.Rand) Charset {
 	cRunes := []rune(c)
 	rng.Shuffle(len(cRunes), func(i, j int) {
 		cRunes[i], cRunes[j] = cRunes[j], cRunes[i]
 	})
 	return Charset(cRunes)
+}
+
+// Shuffled returns a copy of the Charset reordered using crypto/rand.
+func (c Charset) Shuffled() (Charset, error) {
+	cRunes := []rune(c)
+	if err := crypto.Shuffle(cRunes); err != nil {
+		return c, err
+	}
+	return Charset(cRunes), nil
 }
 
 // WithoutAmbiguity removes Ambiguous looking characters.

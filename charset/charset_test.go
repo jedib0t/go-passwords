@@ -45,3 +45,20 @@ func TestCharset_WithoutDuplicates(t *testing.T) {
 	cs = cs.WithoutDuplicates()
 	assert.Equal(t, "abcde0olI", string(cs))
 }
+
+func TestCharset_Shuffled(t *testing.T) {
+	cs := AlphaNumeric
+
+	shuffled, err := cs.Shuffled()
+	assert.NoError(t, err)
+	assert.Len(t, shuffled, len(cs))
+	for _, r := range cs {
+		assert.True(t, shuffled.Contains(r), "shuffled charset should contain %c", r)
+	}
+
+	// with 62 characters, two crypto shuffles colliding with the original
+	// order is impossible for all practical purposes
+	shuffled2, err := cs.Shuffled()
+	assert.NoError(t, err)
+	assert.False(t, shuffled == cs && shuffled2 == cs, "shuffle should change the order")
+}
