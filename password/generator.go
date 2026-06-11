@@ -75,13 +75,22 @@ func (g *generator) Generate() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return string(buf[:n]), nil
+	password := string(buf[:n])
+	// wipe the intermediate buffer so the password lives only in the returned
+	// string; callers needing full control of secret lifetime should use
+	// GenerateTo with their own buffer instead
+	clear(buf)
+	return password, nil
 }
 
 func (g *generator) GenerateTo(buf []byte) (int, error) {
-	// use the pool to get a []rune for working on
+	// use the pool to get a []rune for working on; wipe it before returning
+	// it so password material does not linger in pooled memory
 	passwordPtr := g.pool.Get().(*[]rune)
-	defer g.pool.Put(passwordPtr)
+	defer func() {
+		clear(*passwordPtr)
+		g.pool.Put(passwordPtr)
+	}()
 	password := (*passwordPtr)[:g.numChars]
 
 	// fill it with minimum requirements first
