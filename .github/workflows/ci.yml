@@ -22,7 +22,7 @@ jobs:
     steps:
       # Checkout the code
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       # Set up the GoLang environment
       - name: Set up Go
